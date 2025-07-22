@@ -1,6 +1,6 @@
 import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { AdminLoginResponseDto } from 'src/modules/admin/dto/admin-login-response.dto';
 import { AdminLoginDto } from 'src/modules/admin/dto/admin-login.dto';
 import { JwtUserPayloadDto } from 'src/utils/jwt-payload.dto';
@@ -8,12 +8,19 @@ import { Admin, AdminRole } from 'src/entities/admin.entity';
 import { provideToken } from 'src/utils/jwt-utils';
 import bcrypt from 'bcrypt';
 import { AdminRegisterDto } from 'src/modules/admin/dto/admin-register.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AdminService {
+    private readonly logger = new Logger(AdminService.name);
+
     constructor(
         @InjectRepository(Admin)
         private readonly adminRepository: EntityRepository<Admin>,
+
+        @Inject(CACHE_MANAGER) 
+        private cacheManager: Cache
     ) {}
 
     async AdminLogin(dto: AdminLoginDto) {
@@ -56,5 +63,17 @@ export class AdminService {
         await this.adminRepository.insert(newAdmin);
 
         return newAdmin;
+    }
+
+    async GetAdminById(adminId: string){
+        const adminCache = await this.cacheManager.get<Admin>(adminId);
+        if(adminCache){
+            this.logger.log(`Found admin cache: ${adminId}`);
+            return adminCache
+        }
+        const admin =  await this.adminRepository.findOne({id: adminId});
+        this.logger.log(`Setting admin cache: ${adminId}`);
+        await this.cacheManager.set(adminId, admin);
+        return admin;
     }
 }

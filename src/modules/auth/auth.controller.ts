@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CheckPidDto } from './dto/check-pid.dto';
 import { LoginDto } from './dto/login.dto';
@@ -7,6 +7,7 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
 import { AuthenticatedRequest } from 'src/guards/application-requests';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('auth')
 export class AuthController {
@@ -20,6 +21,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(AuthGuard)
+  @UseInterceptors(CacheInterceptor)
   @ApiBearerAuth(ACCESS_TOKEN)
   me(@Req() request: AuthenticatedRequest) {
     return request.user

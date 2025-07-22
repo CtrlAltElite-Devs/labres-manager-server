@@ -16,6 +16,7 @@ import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { AuthenticatedRequest } from 'src/guards/application-requests';
 import { UserOnlyGuard } from 'src/guards/user-only.guard';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('test-result')
 @ApiBearerAuth(ACCESS_TOKEN)
@@ -33,13 +34,15 @@ export class ResultsController {
 
   @Get()
   @UseGuards(AuthGuard)
+  @UseInterceptors(CacheInterceptor)
   async getTestResults(@Req() request: AuthenticatedRequest) {
-    const response = await this.resultService.GetTestResults(request.user);
+    const response = await this.resultService.GetTestResults(request.user, request.admin);
     return response;
   }
 
   @Get('/:id')
   @UseGuards(AuthGuard, UserOnlyGuard)
+  @UseInterceptors(CacheInterceptor)
   async getTestResultById(
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,

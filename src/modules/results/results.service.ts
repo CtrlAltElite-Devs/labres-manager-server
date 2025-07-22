@@ -53,7 +53,7 @@ export class ResultsService {
         `Invalid test date ${testDate.getTime()}, Exptected YYYY-MM-DD`,
       );
     }
-    
+
     const testName = parts.slice(1, -1).join(' '); // "BloodTest" or multi-word test names
 
     // check if pid exists
@@ -86,12 +86,14 @@ export class ResultsService {
   async GetTestResults(user?: User, admin?: Admin) {
     let results: any[];
     if (admin) {
+      console.log("entered as admin")
       results = await this.testResultRepository.findAll({
         fields: ['id', 'user', 'testName', 'size', 'testDate'], // applying projection
       });
     } else if (user) {
+      console.log("entered as user")
       results = await this.testResultRepository.find(
-        { user },
+        { user: { pid: user.pid } },
         {
           fields: ['id', 'user', 'testName', 'size', 'testDate'], // applying projection
         },
