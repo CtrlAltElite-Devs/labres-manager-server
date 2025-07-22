@@ -6,14 +6,14 @@ import { Admin, AdminRole } from '../entities/admin.entity';
 import "dotenv/config";
 
 export class SuperAdminSeeder extends Seeder {
-    private readonly logger = new Logger(SuperAdminSeeder.name)
+    private readonly logger = new Logger(SuperAdminSeeder.name);
     async run(em: EntityManager): Promise<void> {
         this.logger.log("Seeding Database Super admin");
         const email = process.env.SUPER_ADMIN_EMAIL;
         const password = process.env.SUPER_ADMIN_PASSWORD;
 
         if(!email || !password) {
-            this.logger.log("Failed to seed super admin, make sure email and password is in .env file")
+            this.logger.fatal("Failed to seed super admin, make sure email and password is in .env file")
             return;
         }
 
