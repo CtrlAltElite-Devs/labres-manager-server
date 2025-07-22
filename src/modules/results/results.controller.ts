@@ -9,7 +9,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiHeader } from '@nestjs/swagger';
 import { CreateResultDto } from './dto/create-result.dto';
 import { ResultsService } from './results.service';
 import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
@@ -17,11 +17,19 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { AuthenticatedRequest } from 'src/guards/application-requests';
 import { UserOnlyGuard } from 'src/guards/user-only.guard';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { MachineGuard } from 'src/guards/license/machine.guard';
+import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/license/machine-request';
 
 @Controller('test-result')
-@ApiBearerAuth(ACCESS_TOKEN)
 export class ResultsController {
   constructor(private readonly resultService: ResultsService) {}
+
+  @Get("license-protected")
+  @UseGuards(MachineGuard)
+  @ApiHeader(machineHeaderOptions)
+  resultProtected(@Req() request: AuthenticatedMachineRequest){
+    return request.license;
+  }
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
@@ -33,6 +41,7 @@ export class ResultsController {
   }
 
   @Get()
+  @ApiBearerAuth(ACCESS_TOKEN)
   @UseGuards(AuthGuard)
   @UseInterceptors(CacheInterceptor)
   async getTestResults(@Req() request: AuthenticatedRequest) {
@@ -41,6 +50,7 @@ export class ResultsController {
   }
 
   @Get('/:id')
+  @ApiBearerAuth(ACCESS_TOKEN)
   @UseGuards(AuthGuard, UserOnlyGuard)
   @UseInterceptors(CacheInterceptor)
   async getTestResultById(
@@ -51,4 +61,6 @@ export class ResultsController {
     const response = await this.resultService.GetTestResultById(id, user!);
     return response;
   }
+
+ 
 }

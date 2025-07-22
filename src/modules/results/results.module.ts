@@ -9,10 +9,12 @@ import { AuthModule } from '../auth/auth.module';
 import { Admin } from 'src/entities/admin.entity';
 import { AdminModule } from '../admin/admin.module';
 import { AdminService } from '../admin/admin.service';
+import { LicenseService } from '../license/license.service';
+import { License } from 'src/entities/license.entity';
 
 @Module({
-  imports: [AuthModule, AdminModule, MikroOrmModule.forFeature([User, TestResult, Admin])],
+  imports: [AuthModule, AdminModule, MikroOrmModule.forFeature([User, TestResult, Admin, License])],
   controllers: [ResultsController],
-  providers: [ResultsService, AuthService, AdminService],
+  providers: [ResultsService, AuthService, AdminService, LicenseService],
 })
 export class ResultsModule {}

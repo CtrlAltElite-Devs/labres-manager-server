@@ -7,13 +7,14 @@ import { HealthController } from './modules/health/health.controller';
 import config from "./mikro-orm.config";
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
+import { LicenseModule } from './modules/license/license.module';
 
 @Module({
   imports: [
-    AuthModule, ResultsModule, AdminModule,
+    AuthModule, ResultsModule, AdminModule, LicenseModule,
     MikroOrmModule.forRootAsync({useFactory: () => config}),
     ConfigModule.forRoot({isGlobal: true}),
-    CacheModule.register({isGlobal: true})
+    CacheModule.register({isGlobal: true}),
   ],
   controllers: [HealthController]
 })
