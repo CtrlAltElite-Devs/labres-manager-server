@@ -12,7 +12,7 @@ import { AuthenticatedRequest } from './application-requests';
 import jwt from 'jsonwebtoken';
 import 'dotenv/config';
 
-import { JwtUserPayloadDto } from 'src/auth/dto/jwt-payload.dto';
+import { JwtUserPayloadDto } from 'src/utils/jwt-payload.dto';
 import { EntityManager } from '@mikro-orm/core';
 import { User } from 'src/entities/user.entity';
 import { Admin } from 'src/entities/admin.entity';
@@ -56,7 +56,7 @@ export class AuthGuard implements CanActivate {
           throw new UnauthorizedException('Invalid token');
         }
         request.admin = admin;
-        
+
       } else {
         // find user
         const user = await this.em.findOne(User, {

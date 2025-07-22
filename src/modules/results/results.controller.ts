@@ -12,7 +12,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { CreateResultDto } from './dto/create-result.dto';
 import { ResultsService } from './results.service';
-import { ACCESS_TOKEN } from 'src/bootstrap-configuration';
+import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { AuthenticatedRequest } from 'src/guards/application-requests';
 

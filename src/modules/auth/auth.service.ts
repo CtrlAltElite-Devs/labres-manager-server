@@ -16,22 +16,14 @@ import { provideToken } from 'src/utils/jwt-utils';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { CheckPidResponseDto } from './dto/check-pid-response.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { JwtUserPayloadDto } from './dto/jwt-payload.dto';
-import { AdminLoginDto } from './dto/admin-login.dto';
-import { Admin, AdminRole } from 'src/entities/admin.entity';
-import bcyrpt from 'bcrypt';
-import { AdminLoginResponseDto } from './dto/admin-login-response.dto';
-import { AdminRegisterDto } from './dto/admin-register.dto';
+import { JwtUserPayloadDto } from '../../utils/jwt-payload.dto';
+
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: EntityRepository<User>,
-
-    @InjectRepository(Admin)
-    private readonly adminRepository: EntityRepository<Admin>,
-
     private readonly entityManager: EntityManager,
   ) {}
 
@@ -92,44 +84,4 @@ export class AuthService {
     return user;
   }
 
-  async AdminLogin(dto: AdminLoginDto) {
-    const admin = await this.adminRepository.findOne({email: dto.email});
-
-    if(admin === null) throw new BadRequestException("Invalid Credentials");
-
-    const isMatch = await bcyrpt.compare(
-      dto.password,
-      admin.password
-    )
-
-    if(!isMatch){
-      throw new BadRequestException("Invalid Credentials");
-    }
-
-    const token = provideToken(JwtUserPayloadDto.MapAdmin(admin));
-
-    const responseDto = new AdminLoginResponseDto();
-    responseDto.admin = admin;
-    responseDto.token = token;
-    return responseDto;
-  }
-
-  async AdminRegister(dto: AdminRegisterDto) {
-    const {email, password } = dto;
-
-    const existing = await this.adminRepository.findOne({email: email});
-
-    if(existing !== null) throw new BadRequestException("admin email already exists");
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newAdmin = new Admin();
-    newAdmin.email = email;
-    newAdmin.password = hashedPassword;
-    newAdmin.role = AdminRole.ADMIN;
-
-    await this.entityManager.flush();
-
-    return newAdmin;
-  }
 }
