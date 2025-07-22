@@ -7,11 +7,10 @@ import { HealthController } from './modules/health/health.controller';
 import config from "./mikro-orm.config";
 
 @Module({
-  imports: [AuthModule, ResultsModule,
+  imports: [AuthModule, ResultsModule, AdminModule,
     MikroOrmModule.forRootAsync({
       useFactory: () => config
     }),
-    AdminModule
   ],
   controllers: [HealthController]
 })

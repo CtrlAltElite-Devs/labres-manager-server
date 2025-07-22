@@ -32,8 +32,7 @@ export function ApplyConfigurations(app: INestApplication<any>){
 
 export function ApplyCorsConfigurations(app: INestApplication<any>){
     app.enableCors({
-        origin:  ["http://localhost:5173", "http://192.168.43.200:5173", "https://kfsbqd92-5173.asse.devtunnels.ms"],
-        methods: ["GET", "POST"],
+        origin:  ["http://localhost:5173", "http://192.168.43.200:5173", "https://grv0jxjl-3000.asse.devtunnels.ms"],
         credentials: true
     });
 }
