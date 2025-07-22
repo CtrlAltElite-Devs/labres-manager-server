@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { EntityManager, EntityRepository } from '@mikro-orm/core';
+import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AdminLoginResponseDto } from 'src/modules/admin/dto/admin-login-response.dto';
@@ -17,8 +14,6 @@ export class AdminService {
     constructor(
         @InjectRepository(Admin)
         private readonly adminRepository: EntityRepository<Admin>,
-
-        private readonly entityManager: EntityManager,
     ) {}
 
     async AdminLogin(dto: AdminLoginDto) {
@@ -58,7 +53,7 @@ export class AdminService {
         newAdmin.password = hashedPassword;
         newAdmin.role = AdminRole.ADMIN;
 
-        await this.entityManager.flush();
+        await this.adminRepository.insert(newAdmin);
 
         return newAdmin;
     }

@@ -24,7 +24,6 @@ export class ResultsService {
 
   async UploadTestResults(file: Express.Multer.File) {
     const fileType = file.mimetype;
-    this.logger.log(`File type: ${fileType}`);
 
     if (fileType !== 'application/pdf') {
       throw new BadRequestException('File type must be application/pdf');
@@ -46,6 +45,15 @@ export class ResultsService {
     if (testDateStr.endsWith('.pdf')) {
       testDateStr = testDateStr.replace('.pdf', '');
     }
+    
+    // Convert testDateStr to a Date object
+    const testDate = new Date(testDateStr);
+    if (isNaN(testDate.getTime())) {
+      throw new BadRequestException(
+        `Invalid test date ${testDate.getTime()}, Exptected YYYY-MM-DD`,
+      );
+    }
+    
     const testName = parts.slice(1, -1).join(' '); // "BloodTest" or multi-word test names
 
     // check if pid exists
@@ -62,14 +70,6 @@ export class ResultsService {
       this.logger.log(`existing user found`);
     }
 
-    // Convert testDateStr to a Date object
-    const testDate = new Date(testDateStr);
-    console.log(testDateStr, testDate);
-    if (isNaN(testDate.getTime())) {
-      throw new BadRequestException(
-        `Invalid test date ${testDate.getTime()}, Exptected YYYY-MM-DD`,
-      );
-    }
 
     const testResult = new TestResult();
     testResult.user = createdUser ? createdUser : existingUser!;

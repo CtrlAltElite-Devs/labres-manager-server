@@ -15,6 +15,7 @@ import { ResultsService } from './results.service';
 import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { AuthenticatedRequest } from 'src/guards/application-requests';
+import { UserOnlyGuard } from 'src/guards/user-only.guard';
 
 @Controller('test-result')
 @ApiBearerAuth(ACCESS_TOKEN)
@@ -38,7 +39,7 @@ export class ResultsController {
   }
 
   @Get('/:id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, UserOnlyGuard)
   async getTestResultById(
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,

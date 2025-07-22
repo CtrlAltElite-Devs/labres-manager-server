@@ -1,6 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import { IsEmail, IsStrongPassword } from "class-validator";
 
-// todo add validation for roles and password
 export class AdminRegisterDto {
+    @IsEmail()
     email: string;
+    
+    @IsStrongPassword({
+        minLength: 6
+    })
     password: string;
 }
