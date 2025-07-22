@@ -1,0 +1,83 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { EntityRepository } from '@mikro-orm/core';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { TestResult } from 'src/entities/test-result.entity';
+import { User } from 'src/entities/user.entity';
+import { CreateResultResponseDto } from './dto/create-result-response.dto';
+
+@Injectable()
+export class ResultsService {
+  private readonly logger = new Logger(ResultsService.name);
+
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: EntityRepository<User>,
+
+    @InjectRepository(TestResult)
+    private readonly testResultRepository: EntityRepository<TestResult>
+  ) {}
+
+  async UploadTestResults(file: Express.Multer.File) {
+    const fileType = file.mimetype;
+    this.logger.log(`File type: ${fileType}`);
+
+    if(fileType !== "application/pdf"){
+      throw new BadRequestException("File type must be application/pdf");
+    }
+
+    const size = file.size;
+    const fileName = file.originalname;
+
+    const parts: string[] = fileName.split('_');
+
+    if (parts.length < 3) {
+      throw new BadRequestException(
+        'Invalid File format. Expected format: PID_nameOfTest_testDate.pdf',
+      );
+    }
+
+    const pid = parts[0]; // "12345"
+    let testDateStr = parts[parts.length - 1]; // "2024-03-30"
+    if(testDateStr.endsWith(".pdf")){
+      testDateStr = testDateStr.replace(".pdf", "");
+    }
+    const testName = parts.slice(1, -1).join(' '); // "BloodTest" or multi-word test names
+
+    // check if pid exists
+    const existingUser = await this.userRepository.findOne({ pid: pid });
+
+    //if user does not exist
+    let createdUser: User | null = null;
+    if (existingUser === null) {
+      this.logger.log(`No Existing user, will create user for pid:${pid}`);
+      createdUser = new User();
+      createdUser.pid = pid;
+      await this.userRepository.insert(createdUser);
+    } else {
+      this.logger.log(`existing user found`);
+    }
+
+    // Convert testDateStr to a Date object
+    const testDate = new Date(testDateStr);
+    console.log(testDateStr, testDate);
+    if (isNaN(testDate.getTime())) {
+      throw new BadRequestException(`Invalid test date ${testDate.getTime()}, Exptected YYYY-MM-DD`);
+    }
+
+    const testResult = new TestResult();
+    testResult.user = createdUser ? createdUser : existingUser!;
+    testResult.testName = testName;
+    testResult.testDate = testDate;
+    testResult.size = size;
+    testResult.binaryPdf = file.buffer;
+
+    await this.testResultRepository.insert(testResult);
+
+    return CreateResultResponseDto.Map(testResult);
+  }
+
+  
+}
