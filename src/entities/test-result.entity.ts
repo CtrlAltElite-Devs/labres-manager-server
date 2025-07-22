@@ -7,7 +7,9 @@ export class TestResult {
     @PrimaryKey({columnType: "uuid"})
     id = v4();
 
-    @ManyToOne()
+    @ManyToOne(() => User, {
+        fieldName: 'userPid',
+    })
     user: User;
 
     @Property()

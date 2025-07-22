@@ -178,8 +178,8 @@
           "nullable": false,
           "mappedType": "uuid"
         },
-        "user_pid": {
-          "name": "user_pid",
+        "userPid": {
+          "name": "userPid",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -243,10 +243,10 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "test_result_user_pid_foreign": {
-          "constraintName": "test_result_user_pid_foreign",
+        "test_result_userPid_foreign": {
+          "constraintName": "test_result_userPid_foreign",
           "columnNames": [
-            "user_pid"
+            "userPid"
           ],
           "localTableName": "public.test_result",
           "referencedColumnNames": [

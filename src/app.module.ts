@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ResultsModule } from './results/results.module';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import config from "./mikro-orm.config";
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [AuthModule, ResultsModule,
@@ -12,7 +11,6 @@ import config from "./mikro-orm.config";
       useFactory: () => config
     })
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [HealthController]
 })
 export class AppModule {}

@@ -3,20 +3,23 @@ import {
   Get,
   Param,
   Post,
+  Req,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { CreateResultDto } from './dto/create-result.dto';
 import { ResultsService } from './results.service';
+import { ACCESS_TOKEN } from 'src/bootstrap-configuration';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { AuthenticatedRequest } from 'src/guards/application-requests';
 
 @Controller('test-result')
+@ApiBearerAuth(ACCESS_TOKEN)
 export class ResultsController {
-  
-  constructor(
-    private readonly resultService: ResultsService 
-  ) {}
+  constructor(private readonly resultService: ResultsService) {}
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
@@ -28,12 +31,20 @@ export class ResultsController {
   }
 
   @Get()
-  getTestResults(){
-    return "results";
+  @UseGuards(AuthGuard)
+  async getTestResults(@Req() request: AuthenticatedRequest) {
+    const response = await this.resultService.GetTestResults(request.user);
+    return response;
   }
 
-  @Get("/:id")
-  getTestResultById(@Param("id") id: string){
-    return id;
+  @Get('/:id')
+  @UseGuards(AuthGuard)
+  async getTestResultById(
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const { user } = request;
+    const response = await this.resultService.GetTestResultById(id, user!);
+    return response;
   }
 }
