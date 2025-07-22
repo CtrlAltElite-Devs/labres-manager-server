@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   CanActivate,
   ExecutionContext,
@@ -12,7 +9,6 @@ import { AuthenticatedRequest } from './application-requests';
 import jwt from 'jsonwebtoken';
 
 import { JwtUserPayloadDto } from 'src/utils/jwt-payload.dto';
-import { EntityManager } from '@mikro-orm/core';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { AdminService } from 'src/modules/admin/admin.service';
@@ -22,10 +18,9 @@ export class AuthGuard implements CanActivate {
   private readonly logger = new Logger(AuthGuard.name);
 
   constructor(
-    private readonly em: EntityManager,
     private readonly authService: AuthService,
     private readonly adminService: AdminService,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -45,21 +40,23 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const decoded = jwt.verify(token, this.config.get<string>("JWT_SECRET"));
-      this.logger.log(`decoded jwt is ${decoded}`);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const decoded = jwt.verify(token, this.config.get<string>('JWT_SECRET'));
+      //this.logger.log(`decoded jwt is ${decoded}`);
       const decodedPayload = decoded as JwtUserPayloadDto;
-      this.logger.log(`decoded payload is ${JSON.stringify(decodedPayload)}`);
+      //this.logger.log(`decoded payload is ${JSON.stringify(decodedPayload)}`);
 
       if (decodedPayload.isAdmin) {
         // find admin
-        const admin = await this.adminService.GetAdminById(decodedPayload.adminId!);
+        const admin = await this.adminService.GetAdminById(
+          decodedPayload.adminId!,
+        );
 
-        if(admin === null){
-          this.logger.log('Admin was not found');  
+        if (admin === null) {
+          this.logger.log('Admin was not found');
           throw new UnauthorizedException('Invalid token');
         }
         request.admin = admin;
-
       } else {
         // find user
         const user = await this.authService.GetUserById(decodedPayload.pid!);
@@ -75,7 +72,7 @@ export class AuthGuard implements CanActivate {
       return true;
     } catch {
       this.logger.log('Decoding failed');
-      throw new UnauthorizedException('A decoding exception occured');
+      throw new UnauthorizedException('Malformed Access Token');
     }
   }
 }

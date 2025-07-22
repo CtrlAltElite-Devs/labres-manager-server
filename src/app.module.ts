@@ -9,10 +9,9 @@ import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
-  imports: [AuthModule, ResultsModule, AdminModule,
-    MikroOrmModule.forRootAsync({
-      useFactory: () => config
-    }),
+  imports: [
+    AuthModule, ResultsModule, AdminModule,
+    MikroOrmModule.forRootAsync({useFactory: () => config}),
     ConfigModule.forRoot({isGlobal: true}),
     CacheModule.register({isGlobal: true})
   ],
