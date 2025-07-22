@@ -18,7 +18,7 @@ import { MachineGuard } from 'src/guards/license/machine.guard';
 import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/license/machine-request';
 import { AuthenticatedRequest } from 'src/guards/application/application-requests';
 import { AuthGuard } from 'src/guards/application/auth.guard';
-import { UserOnlyGuard } from 'src/guards/application/user-only.guard';
+import { UserOnly } from 'src/guards/application/application-guard.decorators';
 
 @Controller('test-result')
 export class ResultsController {
@@ -51,7 +51,7 @@ export class ResultsController {
 
   @Get('/:id')
   @ApiBearerAuth(ACCESS_TOKEN)
-  @UseGuards(AuthGuard, UserOnlyGuard)
+  @UserOnly()
   @UseInterceptors(CacheInterceptor)
   async getTestResultById(
     @Param('id') id: string,
