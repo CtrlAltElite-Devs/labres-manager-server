@@ -10,18 +10,23 @@ import {
 } from '@nestjs/common';
 import { AuthenticatedRequest } from './application-requests';
 import jwt from 'jsonwebtoken';
-import 'dotenv/config';
 
 import { JwtUserPayloadDto } from 'src/utils/jwt-payload.dto';
 import { EntityManager } from '@mikro-orm/core';
-import { User } from 'src/entities/user.entity';
-import { Admin } from 'src/entities/admin.entity';
+import { ConfigService } from '@nestjs/config';
+import { AuthService } from 'src/modules/auth/auth.service';
+import { AdminService } from 'src/modules/admin/admin.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   private readonly logger = new Logger(AuthGuard.name);
 
-  constructor(private readonly em: EntityManager) {}
+  constructor(
+    private readonly em: EntityManager,
+    private readonly authService: AuthService,
+    private readonly adminService: AdminService,
+    private readonly config: ConfigService
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
@@ -40,16 +45,14 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+      const decoded = jwt.verify(token, this.config.get<string>("JWT_SECRET"));
       this.logger.log(`decoded jwt is ${decoded}`);
       const decodedPayload = decoded as JwtUserPayloadDto;
       this.logger.log(`decoded payload is ${JSON.stringify(decodedPayload)}`);
 
       if (decodedPayload.isAdmin) {
         // find admin
-        const admin = await this.em.findOne(Admin, {
-            id: decodedPayload.adminId
-        })
+        const admin = await this.adminService.GetAdminById(decodedPayload.adminId!);
 
         if(admin === null){
           this.logger.log('Admin was not found');  
@@ -59,9 +62,7 @@ export class AuthGuard implements CanActivate {
 
       } else {
         // find user
-        const user = await this.em.findOne(User, {
-          pid: decodedPayload.pid,
-        });
+        const user = await this.authService.GetUserById(decodedPayload.pid!);
 
         if (user === null) {
           this.logger.log('User was not found');

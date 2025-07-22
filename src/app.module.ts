@@ -5,12 +5,16 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ResultsModule } from './modules/results/results.module';
 import { HealthController } from './modules/health/health.controller';
 import config from "./mikro-orm.config";
+import { ConfigModule } from '@nestjs/config';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [AuthModule, ResultsModule, AdminModule,
     MikroOrmModule.forRootAsync({
       useFactory: () => config
     }),
+    ConfigModule.forRoot({isGlobal: true}),
+    CacheModule.register({isGlobal: true})
   ],
   controllers: [HealthController]
 })

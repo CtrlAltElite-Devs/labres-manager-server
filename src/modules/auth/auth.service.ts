@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
@@ -17,14 +16,20 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { CheckPidResponseDto } from './dto/check-pid-response.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { JwtUserPayloadDto } from '../../utils/jwt-payload.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: EntityRepository<User>,
     private readonly entityManager: EntityManager,
+    @Inject(CACHE_MANAGER) 
+    private cacheManager: Cache
   ) {}
 
   async Login(dto: LoginDto): Promise<LoginResponseDto> {
@@ -80,8 +85,20 @@ export class AuthService {
     user.password = await bcrypt.hash(password, 10);
 
     await this.entityManager.flush();
+    await this.cacheManager.del(pid);
 
     return user;
   }
 
+  async GetUserById(pid: string) {
+    const userCache = await this.cacheManager.get<User>(pid);
+    if(userCache){
+      this.logger.log(`Found user cache: ${pid}`);
+      return userCache;
+    }
+    const user = await this.userRepository.findOne({pid});
+    this.logger.log(`Setting user cache: ${pid}`);
+    await this.cacheManager.set(pid, user);
+    return user;
+  }
 }
