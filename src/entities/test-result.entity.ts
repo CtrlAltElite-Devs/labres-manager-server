@@ -24,3 +24,6 @@ export class TestResult {
     @Property({columnType: "timestamp"})
     testDate: Date;
 }
+
+
+export type TestResultWithoutPdf = Omit<TestResult, 'binaryPdf'>;

@@ -2,11 +2,12 @@ import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
-import { AdminGuard } from 'src/guards/admin.guard';
-import { AuthGuard } from 'src/guards/auth.guard';
 import { AdminLoginDto } from 'src/modules/admin/dto/admin-login.dto';
 import { AdminRegisterDto } from 'src/modules/admin/dto/admin-register.dto';
-import { SuperAdminGuard } from 'src/guards/super-admin.guard';
+import { AdminGuard } from 'src/guards/application/admin.guard';
+import { AuthGuard } from 'src/guards/application/auth.guard';
+import { SuperAdminGuard } from 'src/guards/application/super-admin.guard';
+
 @Controller('auth/admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}

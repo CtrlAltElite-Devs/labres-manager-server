@@ -3,11 +3,11 @@ import { AuthService } from './auth.service';
 import { CheckPidDto } from './dto/check-pid.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { AuthGuard } from 'src/guards/auth.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
-import { AuthenticatedRequest } from 'src/guards/application-requests';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { AuthenticatedRequest } from 'src/guards/application/application-requests';
+import { AuthGuard } from 'src/guards/application/auth.guard';
 
 @Controller('auth')
 export class AuthController {

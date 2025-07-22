@@ -13,12 +13,12 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiHeader } from '@nestjs/swagger'
 import { CreateResultDto } from './dto/create-result.dto';
 import { ResultsService } from './results.service';
 import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
-import { AuthGuard } from 'src/guards/auth.guard';
-import { AuthenticatedRequest } from 'src/guards/application-requests';
-import { UserOnlyGuard } from 'src/guards/user-only.guard';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { MachineGuard } from 'src/guards/license/machine.guard';
 import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/license/machine-request';
+import { AuthenticatedRequest } from 'src/guards/application/application-requests';
+import { AuthGuard } from 'src/guards/application/auth.guard';
+import { UserOnlyGuard } from 'src/guards/application/user-only.guard';
 
 @Controller('test-result')
 export class ResultsController {

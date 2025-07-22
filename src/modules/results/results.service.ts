@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { TestResult } from 'src/entities/test-result.entity';
+import { TestResult, TestResultWithoutPdf } from 'src/entities/test-result.entity';
 import { User } from 'src/entities/user.entity';
 import { CreateResultResponseDto } from './dto/create-result-response.dto';
 import { Admin } from 'src/entities/admin.entity';
@@ -84,7 +81,7 @@ export class ResultsService {
   }
 
   async GetTestResults(user?: User, admin?: Admin) {
-    let results: any[];
+    let results: TestResultWithoutPdf[];
     if (admin) {
       console.log("entered as admin")
       results = await this.testResultRepository.findAll({
