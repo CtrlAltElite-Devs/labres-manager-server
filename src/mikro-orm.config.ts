@@ -1,10 +1,24 @@
 import { defineConfig, PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { entities } from "./entities/index.entity";
 import { Migrator } from "@mikro-orm/migrations";
-import "dotenv/config";
 import { SeedManager } from "@mikro-orm/seeder";
+import "dotenv/config";
 
-const isNeon = process.env.DATABASE_URL?.includes('neon.tech');
+const getConnectionStrategy = () => {
+  const isNeon = process.env.DATABASE_URL?.includes('neon.tech');
+  if(isNeon) {
+    return {
+      ssl: {
+        rejectUnauthorized: false, // required for Neon
+      }
+    }
+  }
+
+  return {
+    ssl: false
+  }
+
+}
 
 export default defineConfig({
   driver: PostgreSqlDriver,
@@ -12,15 +26,7 @@ export default defineConfig({
   entities: entities,
   extensions: [Migrator, SeedManager],
   driverOptions: {
-      connection: isNeon
-        ? {
-            ssl: {
-              rejectUnauthorized: false, // required for Neon
-            },
-          }
-        : {
-            ssl: false, // for local
-          },
-    },
+    connection: getConnectionStrategy()
+  },
   debug: true,
 });
