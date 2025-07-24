@@ -7,6 +7,6 @@ async function bootstrap() {
   UseSwagger(app);
   ApplyConfigurations(app);
   ApplyCorsConfigurations(app);
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 5001);
 }
 bootstrap().catch(console.error);
