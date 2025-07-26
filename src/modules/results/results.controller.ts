@@ -31,12 +31,22 @@ export class ResultsController {
     return request.license;
   }
 
+  @Get("machine")
+  @UseGuards(MachineGuard)
+  @ApiHeader(machineHeaderOptions)
+  async getForMachine(@Req() request: AuthenticatedMachineRequest){
+    const response = await this.resultService.GetTestResultsForMachine(request.license!.fingerPrint);
+    return response;
+  }
+
   @Post()
   @UseInterceptors(FileInterceptor('file'))
+  @UseGuards(MachineGuard)
+  @ApiHeader(machineHeaderOptions)
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: CreateResultDto })
-  async uploadFiles(@UploadedFile() file: Express.Multer.File) {
-    const response = await this.resultService.UploadTestResults(file);
+  async uploadFiles(@UploadedFile() file: Express.Multer.File, @Req() request: AuthenticatedMachineRequest) {
+    const response = await this.resultService.UploadTestResults(file, request.license!);
     return response;
   }
 
@@ -62,5 +72,5 @@ export class ResultsController {
     return response;
   }
 
- 
+
 }

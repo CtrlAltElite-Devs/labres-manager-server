@@ -6,6 +6,7 @@ import { User } from 'src/entities/user.entity';
 import { CreateResultResponseDto } from './dto/create-result-response.dto';
 import { Admin } from 'src/entities/admin.entity';
 import { TestResultDto, TestResultMinimalDto } from './dto/test-result-dto';
+import { License } from 'src/entities/license.entity';
 
 @Injectable()
 export class ResultsService {
@@ -19,7 +20,7 @@ export class ResultsService {
     private readonly testResultRepository: EntityRepository<TestResult>,
   ) {}
 
-  async UploadTestResults(file: Express.Multer.File) {
+  async UploadTestResults(file: Express.Multer.File, license: License) {
     const fileType = file.mimetype;
 
     if (fileType !== 'application/pdf') {
@@ -73,6 +74,7 @@ export class ResultsService {
     testResult.testName = testName;
     testResult.testDate = testDate;
     testResult.size = size;
+    testResult.machine = license;
     testResult.binaryPdf = file.buffer;
 
     await this.testResultRepository.insert(testResult);
@@ -85,14 +87,14 @@ export class ResultsService {
     if (admin) {
       console.log("entered as admin")
       results = await this.testResultRepository.findAll({
-        fields: ['id', 'user', 'testName', 'size', 'testDate'], // applying projection
+        fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
       });
     } else if (user) {
       console.log("entered as user")
       results = await this.testResultRepository.find(
         { user: { pid: user.pid } },
         {
-          fields: ['id', 'user', 'testName', 'size', 'testDate'], // applying projection
+          fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
         },
       );
     } else {
@@ -132,5 +134,26 @@ export class ResultsService {
     dto.base64Pdf = base64pdf;
 
     return dto;
+  }
+
+  async GetTestResultsForMachine(machineId: string) : Promise<TestResultMinimalDto[]>{
+    const results = await this.testResultRepository.find(
+      { machine: {fingerPrint: machineId} },
+      {
+        fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
+      },
+    );
+
+    const testResults = results.map((result) => {
+      const dto = new TestResultMinimalDto();
+      dto.id = result.id;
+      dto.testName = result.testName;
+      dto.size = result.size;
+      dto.testDate = result.testDate;
+      dto.userPid = result.user.pid;
+      return dto;
+    });
+
+    return testResults
   }
 }
