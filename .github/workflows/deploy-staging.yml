@@ -39,7 +39,7 @@ jobs:
                 script: |
                     cd ~/projects/labres-server/staging || mkdir -p ~/projects/labres-server/staging && cd ~/projects/labres-server/staging
                     if [ ! -d labres-manager-server ]; then
-                        git clone --branch staging git@github.com:CtrlAltElite-Devs/labres-manager-server.git
+                        git clone --branch staging https://github.com/CtrlAltElite-Devs/labres-manager-server.git
                     else
                         cd labres-manager-server
                         git fetch origin
