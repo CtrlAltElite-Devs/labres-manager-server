@@ -48,7 +48,7 @@ jobs:
                     fi
 
                     docker pull lrnzo349/staging-labres:latest
-                    docker stack deploy -c docker-compose.yml labres_staging
+                    docker stack deploy -c docker-compose.yml labres-staging
 
 
 
