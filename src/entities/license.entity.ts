@@ -14,4 +14,7 @@ export class License {
 
     @Property({nullable: true})
     fingerPrint: string;
+
+    @Property({default: false })
+    isRevoked: boolean
 }

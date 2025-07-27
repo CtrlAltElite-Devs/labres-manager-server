@@ -15,19 +15,17 @@ export class LicenseSeeder extends Seeder {
             const licenseCount = 10; // 👈 change this to whatever `n` you want
             const licensePrefix = 'TEST_LICENSE';
 
-            const testLicenses = Array.from({ length: licenseCount }, (_, i) => `${licensePrefix}${i + 1}`);
+            const testLicenses = Array.from({ length: licenseCount }, (_, i) => {
+                const license = new License();
+                license.licenseKey = `${licensePrefix}${i + 1}`;
+                return license;
+            });
 
-            await Promise.all(
-                testLicenses.map(async (licenseKey) => {
-                    try {
-                        const license = new License();
-                        license.licenseKey = licenseKey;
-                        await em.insert(License, license);
-                    } catch (error) {
-                        this.logger?.log?.(`Failed to insert license ${licenseKey}:`, error);
-                    }
-                })
-            );
+            try {
+                await em.insertMany(License, testLicenses);
+            } catch (error) {
+                this.logger?.log?.('Failed to insert test licenses:', error);
+            }
         }
 
         if(!masterLicenseKey){

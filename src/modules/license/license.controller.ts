@@ -1,10 +1,13 @@
-import { Body, Controller, Get, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { LicenseService } from './license.service';
 import { VerifyLicenseDto } from './dto/verify-license.dto';
 import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/license/machine-request';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { MachineGuard } from 'src/guards/license/machine.guard';
-import { ApiHeader } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
+import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
+import { SuperAdminOnly } from 'src/guards/application/application-guard.decorators';
+import { CreateLicenseDto } from './dto/create-license.dto';
 
 @Controller('license')
 export class LicenseController {
@@ -23,6 +26,38 @@ export class LicenseController {
   @UseGuards(MachineGuard)
   getLicense(@Req() request: AuthenticatedMachineRequest){
     return request.license
+  }
+
+  @Post("create")
+  @ApiBearerAuth(ACCESS_TOKEN)
+  @SuperAdminOnly()
+  async createLicense(@Body() request: CreateLicenseDto){
+    const response = await this.licenseService.AddLicense(request);
+    return response;
+  }
+
+  @Patch("revoke/:licenseId")
+  @ApiBearerAuth(ACCESS_TOKEN)
+  @SuperAdminOnly()
+  async revoke(@Param("licenseId") licenseId: string){
+    const response = await this.licenseService.RevokeLicense(licenseId);
+    return response;
+  }
+
+  @Patch("activate/:licenseId")
+  @ApiBearerAuth(ACCESS_TOKEN)
+  @SuperAdminOnly()
+  async activate(@Param("licenseId") licenseId: string){
+    const response = await this.licenseService.ReactivateLicense(licenseId);
+    return response;
+  }
+
+  @Get("all")
+  @ApiBearerAuth(ACCESS_TOKEN)
+  @SuperAdminOnly()
+  async getAllLicenses(){
+    const response = await this.licenseService.GetAllLicenses();
+    return response;
   }
 
 }
