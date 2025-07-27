@@ -26,6 +26,11 @@ export class MachineGuard implements CanActivate {
             throw new UnauthorizedException("Missing License");
         }
 
+        if(license.isRevoked){
+            this.logger.log("License Revoked");
+            throw new UnauthorizedException("Your machine license was revoked, Please contact the company");
+        }
+
         this.logger.log("Verified License");
         request.license = license;
         return true;
