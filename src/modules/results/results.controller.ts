@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiHeader } from '@nestjs/swagger'
 import { CreateResultDto } from './dto/create-result.dto';
 import { ResultsService } from './results.service';
 import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { MachineGuard } from 'src/guards/license/machine.guard';
 import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/license/machine-request';
 import { AuthenticatedRequest } from 'src/guards/application/application-requests';
@@ -33,6 +33,7 @@ export class ResultsController {
 
   @Get("machine")
   @UseGuards(MachineGuard)
+  @UseInterceptors(CacheInterceptor)
   @ApiHeader(machineHeaderOptions)
   async getForMachine(@Req() request: AuthenticatedMachineRequest){
     const response = await this.resultService.GetTestResultsForMachine(request.license!.fingerPrint);
@@ -63,6 +64,7 @@ export class ResultsController {
   @ApiBearerAuth(ACCESS_TOKEN)
   @UserOnly()
   @UseInterceptors(CacheInterceptor)
+  @CacheTTL(20)
   async getTestResultById(
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,

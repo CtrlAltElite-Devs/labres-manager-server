@@ -39,6 +39,12 @@ export class LicenseService {
         const existingFingerPrint = license.fingerPrint;
 
         if (existingFingerPrint) {
+            if(license.isRevoked)
+                return {
+                    success: false,
+                    message: "This license was revoked please contact the company"
+                }
+
             const isSameMachine = existingFingerPrint === fingerPrint;
 
             return {
@@ -111,6 +117,7 @@ export class LicenseService {
 
         license.isRevoked = true;
         await this.em.flush();
+        await this.InvokeCachedLicenseSideEffect(license.fingerPrint);
 
         return {
             success: true,
@@ -131,6 +138,7 @@ export class LicenseService {
 
         license.isRevoked = false;
         await this.em.flush();
+        await this.InvokeCachedLicenseSideEffect(license.fingerPrint);
 
         return {
             success: true,
@@ -141,6 +149,11 @@ export class LicenseService {
     async GetAllLicenses(){
         const licenses = await this.licenseRepository.findAll({orderBy: {createdAt: "DESC"}});
         return licenses;
+    }
+
+    private async InvokeCachedLicenseSideEffect(fingerPrint: string){
+        this.logger.log("License updated removing cached license for: " + fingerPrint);
+        await this.cacheManager.del(fingerPrint);
     }
 
 }
