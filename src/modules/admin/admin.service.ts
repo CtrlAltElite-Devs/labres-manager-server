@@ -73,7 +73,7 @@ export class AdminService {
         }
         const admin =  await this.adminRepository.findOne({id: adminId});
         this.logger.log(`Setting admin cache: ${adminId}`);
-        await this.cacheManager.set(adminId, admin);
+        await this.cacheManager.set(adminId, admin, 1000);
         return admin;
     }
 }

@@ -98,7 +98,7 @@ export class AuthService {
     }
     const user = await this.userRepository.findOne({pid});
     this.logger.log(`Setting user cache: ${pid}`);
-    await this.cacheManager.set(pid, user);
+    await this.cacheManager.set(pid, user, 1000);
     return user;
   }
 }

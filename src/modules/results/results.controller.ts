@@ -34,6 +34,7 @@ export class ResultsController {
   @Get("machine")
   @UseGuards(MachineGuard)
   @UseInterceptors(CacheInterceptor)
+  @CacheTTL(3)
   @ApiHeader(machineHeaderOptions)
   async getForMachine(@Req() request: AuthenticatedMachineRequest){
     const response = await this.resultService.GetTestResultsForMachine(request.license!.fingerPrint);
@@ -54,7 +55,6 @@ export class ResultsController {
   @Get()
   @ApiBearerAuth(ACCESS_TOKEN)
   @UseGuards(AuthGuard)
-  @UseInterceptors(CacheInterceptor)
   async getTestResults(@Req() request: AuthenticatedRequest) {
     const response = await this.resultService.GetTestResults(request.user, request.admin);
     return response;
@@ -64,7 +64,7 @@ export class ResultsController {
   @ApiBearerAuth(ACCESS_TOKEN)
   @UserOnly()
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(20)
+  @CacheTTL(5)
   async getTestResultById(
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,
@@ -73,6 +73,4 @@ export class ResultsController {
     const response = await this.resultService.GetTestResultById(id, user!);
     return response;
   }
-
-
 }
