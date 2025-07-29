@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards, UseIntercept
 import { LicenseService } from './license.service';
 import { VerifyLicenseDto } from './dto/verify-license.dto';
 import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/license/machine-request';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { MachineGuard } from 'src/guards/license/machine.guard';
 import { ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
 import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
@@ -23,6 +23,7 @@ export class LicenseController {
   @Get()
   @ApiHeader(machineHeaderOptions)
   @UseInterceptors(CacheInterceptor)
+  @CacheTTL(5)
   @UseGuards(MachineGuard)
   getLicense(@Req() request: AuthenticatedMachineRequest){
     return request.license

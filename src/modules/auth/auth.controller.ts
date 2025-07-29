@@ -5,7 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { AuthenticatedRequest } from 'src/guards/application/application-requests';
 import { AuthGuard } from 'src/guards/application/auth.guard';
 
@@ -22,6 +22,7 @@ export class AuthController {
   @Get('me')
   @UseGuards(AuthGuard)
   @UseInterceptors(CacheInterceptor)
+  @CacheTTL(5)
   @ApiBearerAuth(ACCESS_TOKEN)
   me(@Req() request: AuthenticatedRequest) {
     return request.user
