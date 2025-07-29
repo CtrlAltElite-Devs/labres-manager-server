@@ -32,9 +32,20 @@ export function ApplyConfigurations(app: INestApplication<any>){
 }
 
 export function ApplyCorsConfigurations(app: INestApplication<any>){
+  const isStaging = process.env.APP_ENV === 'staging';
+  console.log("isStaging: ", isStaging);
+  const corsOrigins = !isStaging
+    ? ['https://your-production-frontend.com']
+    : [
+        'http://localhost:5173',
+        'http://192.168.43.200:5173',
+        'http://localhost:3000',
+        'https://5mvm44vp-3000.asse.devtunnels.ms',
+      ];
+
   app.enableCors({
-      origin:  ["http://localhost:5173", "http://192.168.43.200:5173", "https://grv0jxjl-5001.asse.devtunnels.ms", "https://5mvm44vp-3000.asse.devtunnels.ms"],
-      credentials: true
+    origin: corsOrigins,
+    credentials: true,
   });
 }
 
