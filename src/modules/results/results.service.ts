@@ -88,6 +88,7 @@ export class ResultsService {
       console.log("entered as admin")
       results = await this.testResultRepository.findAll({
         fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
+        orderBy: { testDate: 'DESC' }
       });
     } else if (user) {
       console.log("entered as user")
@@ -95,6 +96,7 @@ export class ResultsService {
         { user: { pid: user.pid } },
         {
           fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
+          orderBy: { testDate: 'DESC' }
         },
       );
     } else {
