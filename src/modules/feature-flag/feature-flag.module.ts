@@ -10,5 +10,6 @@ import { AdminModule } from '../admin/admin.module';
   imports: [AuthModule, AdminModule, MikroOrmModule.forFeature([FeatureFlag])],
   controllers: [FeatureFlagController],
   providers: [FeatureFlagService],
+  exports: [FeatureFlagService]
 })
 export class FeatureFlagModule {}
