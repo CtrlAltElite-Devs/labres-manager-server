@@ -40,6 +40,7 @@ export function ApplyCorsConfigurations(app: INestApplication<any>){
         'http://localhost:5173',
         'http://192.168.43.200:5173',
         'http://localhost:3000',
+        'https://labres-manager-web.vercel.app',
         'https://5mvm44vp-3000.asse.devtunnels.ms',
       ];
 
