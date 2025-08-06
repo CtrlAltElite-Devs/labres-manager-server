@@ -20,6 +20,7 @@ import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/li
 import { AuthenticatedRequest } from 'src/guards/application/application-requests';
 import { AuthGuard } from 'src/guards/application/auth.guard';
 import { UserOnly } from 'src/guards/application/application-guard.decorators';
+import { UseFeatureFlag } from 'src/guards/feature/feature-flag.decorator';
 
 @Controller('test-result')
 export class ResultsController {
@@ -78,9 +79,12 @@ export class ResultsController {
   @Delete("/delete-all")
   @ApiBearerAuth(ACCESS_TOKEN)
   @UserOnly()
+  @UseFeatureFlag("delete-all")
   async deleteAllRecords(@Req() request: AuthenticatedRequest){
     const { user } = request;
     const response = await this.resultService.DeleteRecordsForUser(user!);
     return response;
   }
+
+
 }

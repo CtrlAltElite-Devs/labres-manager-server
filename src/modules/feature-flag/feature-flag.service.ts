@@ -49,4 +49,16 @@ export class FeatureFlagService {
         await this.em.flush();
         return feature;
     }
+
+    async isFeatureOn(featureName: string){
+        const feature = await this.featureFlagRepository.findOne({
+            featureName: featureName
+        });
+
+        if(feature === null){
+            throw new NotFoundException("Feature not found");
+        }
+
+        return feature.isOn;
+    }
 }
