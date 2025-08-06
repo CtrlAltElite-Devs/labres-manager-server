@@ -158,4 +158,15 @@ export class ResultsService {
 
     return testResults
   }
+
+  async DeleteRecordsForUser(user: User){
+    const result = await this.testResultRepository.nativeDelete({
+      user: {
+        pid: user.pid
+      }
+    })
+
+    this.logger.log(`Deleted ${result} records`);
+    return `Deleted ${result} records`
+  }
 }

@@ -8,13 +8,14 @@ import config from "./mikro-orm.config";
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { LicenseModule } from './modules/license/license.module';
+import { FeatureFlagModule } from './modules/feature-flag/feature-flag.module';
 
 @Module({
   imports: [
-    AuthModule, ResultsModule, AdminModule, LicenseModule,
+    AuthModule, ResultsModule, AdminModule, LicenseModule, FeatureFlagModule,
     MikroOrmModule.forRootAsync({useFactory: () => config}),
     ConfigModule.forRoot({isGlobal: true}),
-    CacheModule.register({isGlobal: true}),
+    CacheModule.register({isGlobal: true})
   ],
   controllers: [HealthController]
 })

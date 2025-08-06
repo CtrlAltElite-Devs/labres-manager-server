@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -71,6 +72,15 @@ export class ResultsController {
   ) {
     const { user } = request;
     const response = await this.resultService.GetTestResultById(id, user!);
+    return response;
+  }
+
+  @Delete("/delete-all")
+  @ApiBearerAuth(ACCESS_TOKEN)
+  @UserOnly()
+  async deleteAllRecords(@Req() request: AuthenticatedRequest){
+    const { user } = request;
+    const response = await this.resultService.DeleteRecordsForUser(user!);
     return response;
   }
 }
