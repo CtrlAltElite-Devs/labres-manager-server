@@ -146,7 +146,7 @@ export class LicenseService {
         }
     }
 
-    async GetAllLicenses(){
+    async GetAllLicenses() : Promise<License[]>{
         const licenses = await this.licenseRepository.findAll({orderBy: {createdAt: "DESC"}});
         return licenses;
     }
