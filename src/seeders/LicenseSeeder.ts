@@ -4,7 +4,6 @@ import { Logger } from "@nestjs/common";
 import "dotenv/config";
 import { License } from '../entities/license.entity';
 
-
 export class LicenseSeeder extends Seeder {
     private readonly logger = new Logger(LicenseSeeder.name);
     
@@ -12,30 +11,34 @@ export class LicenseSeeder extends Seeder {
         const masterLicenseKey = process.env.SUPER_LICENSE;
         
         if (process.env.NODE_ENV !== 'production') {
-            const licenseCount = 10; // 👈 change this to whatever `n` you want
-            const licensePrefix = 'TEST_LICENSE';
-
-            const testLicenses = Array.from({ length: licenseCount }, (_, i) => {
-                const license = new License();
-                license.licenseKey = `${licensePrefix}${i + 1}`;
-                return license;
-            });
-
-            try {
-                await em.insertMany(License, testLicenses);
-            } catch (error) {
-                this.logger?.log?.('Failed to insert test licenses:', error);
+            const licenseCount = 10;
+            const savedLicenses = await em.findAll(License);
+            if(!(savedLicenses.length >= licenseCount)){
+                const licensePrefix = 'TEST_LICENSE';
+                const testLicenses = Array.from({ length: licenseCount }, (_, i) => {
+                    const license = new License();
+                    license.licenseKey = `${licensePrefix}${i + 1}`;
+                    return license;
+                });
+                try {
+                    await em.insertMany(License, testLicenses);
+                } catch (error) {
+                    this.logger?.log?.('Failed to insert test licenses:', error);
+                }
+            } else {
+                this.logger.log("Database Already has test licenses");
             }
         }
 
         if(!masterLicenseKey){
-            this.logger.fatal("Failed to seed super license, make sure super license is in .env file")
+            this.logger.fatal("Failed to seed super license, make sure super license is in .env file");
+            return;
         }
 
         const exists = await em.findOne(License, {licenseKey: masterLicenseKey});
 
         if(exists){
-            this.logger.log("License key is already added");
+            this.logger.log("Master License key is already added");
             return;
         }
 

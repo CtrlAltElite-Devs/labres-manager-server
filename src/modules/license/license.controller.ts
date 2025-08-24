@@ -5,9 +5,9 @@ import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/li
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { MachineGuard } from 'src/guards/license/machine.guard';
 import { ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
-import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
 import { SuperAdminOnly } from 'src/guards/application/application-guard.decorators';
 import { CreateLicenseDto } from './dto/create-license.dto';
+import { ACCESS_TOKEN } from 'src/configurations/common-configuration';
 
 @Controller('license')
 export class LicenseController {

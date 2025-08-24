@@ -3,6 +3,7 @@ import { Seeder } from "@mikro-orm/seeder";
 import { Logger } from "@nestjs/common";
 import { SuperAdminSeeder } from "./SuperAdminSeeder";
 import { LicenseSeeder } from "./LicenseSeeder";
+import { FeatureFlagSeeder } from "./FeatureFlagSeeder";
 
 export class DatabaseSeeder extends Seeder {
     private readonly logger = new Logger(DatabaseSeeder.name)
@@ -10,7 +11,8 @@ export class DatabaseSeeder extends Seeder {
         this.logger.log("Seeding Database...");
         return this.call(em, [
             SuperAdminSeeder,
-            LicenseSeeder
+            LicenseSeeder,
+            FeatureFlagSeeder
         ]);
     }
 }

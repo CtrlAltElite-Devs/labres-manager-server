@@ -13,7 +13,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiHeader } from '@nestjs/swagger';
 import { CreateResultDto } from './dto/create-result.dto';
 import { ResultsService } from './results.service';
-import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { MachineGuard } from 'src/guards/license/machine.guard';
 import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/license/machine-request';
@@ -21,6 +20,7 @@ import { AuthenticatedRequest } from 'src/guards/application/application-request
 import { AuthGuard } from 'src/guards/application/auth.guard';
 import { UserOnly } from 'src/guards/application/application-guard.decorators';
 import { UseFeatureFlag } from 'src/guards/feature/feature-flag.decorator';
+import { ACCESS_TOKEN } from 'src/configurations/common-configuration';
 
 @Controller('test-result')
 export class ResultsController {
@@ -72,7 +72,7 @@ export class ResultsController {
     @Req() request: AuthenticatedRequest,
   ) {
     const { user } = request;
-    const response = await this.resultService.GetTestResultById(id, user!);
+    const response = await this.resultService.GetTestResultById(id, user!.pid);
     return response;
   }
 
@@ -82,7 +82,7 @@ export class ResultsController {
   @UseFeatureFlag("delete-all")
   async deleteAllRecords(@Req() request: AuthenticatedRequest){
     const { user } = request;
-    const response = await this.resultService.DeleteRecordsForUser(user!);
+    const response = await this.resultService.DeleteRecordsForUser(user!.pid);
     return response;
   }
 

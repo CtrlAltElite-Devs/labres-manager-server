@@ -4,7 +4,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { AdminModule } from './modules/admin/admin.module';
 import { ResultsModule } from './modules/results/results.module';
 import { HealthController } from './modules/health/health.controller';
-import config from "./mikro-orm.config";
+import config from "../mikro-orm.config";
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { LicenseModule } from './modules/license/license.module';

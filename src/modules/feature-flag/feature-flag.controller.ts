@@ -2,9 +2,9 @@ import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { FeatureFlagService } from './feature-flag.service';
 import { SuperAdminOnly } from 'src/guards/application/application-guard.decorators';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
 import { AddFeatureFlagDto } from './dto/add-feature-flag.dto';
 import { ToggleFeatureFlagDto } from './dto/toggle-feature-flag.dto';
+import { ACCESS_TOKEN } from 'src/configurations/common-configuration';
 
 @Controller('feature-flag')
 @ApiBearerAuth(ACCESS_TOKEN)
@@ -24,7 +24,7 @@ export class FeatureFlagController {
     return response;
   }
 
-  @Patch()
+  @Patch("toggle-feature")
   async toggleFeature(@Body() body: ToggleFeatureFlagDto){
     const response = await this.featureFlagService.ToggleFeature(body.featureId);
     return response;

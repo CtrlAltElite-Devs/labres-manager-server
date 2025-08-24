@@ -48,7 +48,7 @@ export class AuthGuard implements CanActivate {
 
       if (decodedPayload.isAdmin) {
         // find admin
-        const admin = await this.adminService.GetAdminById(
+        const admin = await this.adminService.GetAdminByIdForGuard(
           decodedPayload.adminId!,
         );
 
@@ -59,7 +59,7 @@ export class AuthGuard implements CanActivate {
         request.admin = admin;
       } else {
         // find user
-        const user = await this.authService.GetUserById(decodedPayload.pid!);
+        const user = await this.authService.GetUserByIdForGuard(decodedPayload.pid!);
 
         if (user === null) {
           this.logger.log('User was not found');

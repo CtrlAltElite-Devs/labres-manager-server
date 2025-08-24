@@ -1,6 +1,6 @@
 import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AdminLoginResponseDto } from 'src/modules/admin/dto/admin-login-response.dto';
 import { AdminLoginDto } from 'src/modules/admin/dto/admin-login.dto';
 import { JwtUserPayloadDto } from 'src/utils/jwt-payload.dto';
@@ -10,6 +10,10 @@ import bcrypt from 'bcrypt';
 import { AdminRegisterDto } from 'src/modules/admin/dto/admin-register.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { AdminDto } from './dto/admin.dto';
+import { AdminCacheKey } from 'src/helpers/cache-helpers/admin.cache';
+import { EntityManager } from '@mikro-orm/postgresql';
+import { AdminUpdatePasswordDto } from './dto/admin-update-password.dto';
 
 @Injectable()
 export class AdminService {
@@ -18,6 +22,8 @@ export class AdminService {
     constructor(
         @InjectRepository(Admin)
         private readonly adminRepository: EntityRepository<Admin>,
+        
+        private readonly em: EntityManager,
 
         @Inject(CACHE_MANAGER) 
         private cacheManager: Cache
@@ -75,5 +81,47 @@ export class AdminService {
         this.logger.log(`Setting admin cache: ${adminId}`);
         await this.cacheManager.set(adminId, admin, 1000);
         return admin;
+    }
+
+    async GetAdminByIdForGuard(adminId: string) : Promise<AdminDto | null>{
+        const adminDtoCache = await this.cacheManager.get<AdminDto>(AdminCacheKey(adminId));
+        if(adminDtoCache){
+            this.logger.log(`Admin Cache Hit: ${adminId}`)
+            return adminDtoCache;
+        }
+
+        this.logger.log(`Admin Cache Miss: ${adminId}`)
+        const adminDto = await this.adminRepository.findOne({
+            id: adminId,
+        }, {
+            fields: ["id", "email", "role"]
+        });
+
+        await this.cacheManager.set(AdminCacheKey(adminId), adminDto, 1000*15);
+        return adminDto;
+    }
+
+    async UpdateAdminPassword(adminId: string, dto: AdminUpdatePasswordDto){
+        const {oldPassword, newPassword: password} = dto;
+        const admin = await this.adminRepository.findOne({id: adminId});
+        
+        if(admin === null) 
+            throw new NotFoundException();
+
+        const oldPasswordMatches = await bcrypt.compare(
+            oldPassword,
+            admin.password
+        )
+
+        if(!oldPasswordMatches) 
+            throw new BadRequestException();
+        
+        admin.password = await bcrypt.hash(password, 10);
+        await this.em.flush();
+        await this.invokeCacheSideEffect(adminId);
+    }
+
+    private async invokeCacheSideEffect(adminId: string){
+        await this.cacheManager.del(AdminCacheKey(adminId));
     }
 }
