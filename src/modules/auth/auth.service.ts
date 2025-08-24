@@ -18,6 +18,9 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 import { JwtUserPayloadDto } from '../../utils/jwt-payload.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { UserDto } from './dto/user.dto';
+import { UserCacheKey } from 'src/helpers/cache-helpers/user.cache';
+import { LoginResponseV2Dto, UserDtoV2 } from './dto/login-response-v2.dto';
 
 
 @Injectable()
@@ -42,7 +45,7 @@ export class AuthService {
     }
 
     if (!existingUser.password) {
-      throw new BadRequestException('User needs to onboarding to set password');
+      throw new BadRequestException('User needs to be onboarded to set password');
     }
 
     const isMatch = await bcrypt.compare(dto.password, existingUser.password);
@@ -57,6 +60,38 @@ export class AuthService {
       user: existingUser,
       token,
     };
+  }
+
+  async LoginV2(dto: LoginDto) : Promise<LoginResponseV2Dto> {
+    const existingUser = await this.userRepository.findOne({
+      pid: dto.pid,
+    });
+
+    if (existingUser === null) {
+      throw new NotFoundException("User doesn't exist");
+    }
+
+    if (!existingUser.password) {
+      throw new BadRequestException('User needs to be onboarded to set password');
+    }
+
+    const isMatch = await bcrypt.compare(dto.password, existingUser.password);
+
+    if (!isMatch) {
+      throw new ForbiddenException('Invalid Credentials');
+    }
+
+    const token = provideToken(JwtUserPayloadDto.MapUser(existingUser));
+
+    const userDto = new UserDtoV2();
+    userDto.pid = existingUser.pid;
+    userDto.dob = existingUser.dob;
+    userDto.createdAt = existingUser.createdAt;
+
+    const response = new LoginResponseV2Dto();
+    response.token = token;
+    response.user = userDto;
+    return response;
   }
 
   async CheckPid(pid: string) {
@@ -85,20 +120,30 @@ export class AuthService {
     user.password = await bcrypt.hash(password, 10);
 
     await this.entityManager.flush();
-    await this.cacheManager.del(pid);
+    await this.invokeCacheSideEffect(dto.pid);
 
     return user;
   }
 
   async GetUserById(pid: string) {
-    const userCache = await this.cacheManager.get<User>(pid);
-    if(userCache){
-      this.logger.log(`Found user cache: ${pid}`);
-      return userCache;
+    return await this.userRepository.findOne({pid});
+  }
+
+  async GetUserByIdForGuard(pid: string){
+    const userDtoCache = await this.cacheManager.get<UserDto>(UserCacheKey(pid));
+    if(userDtoCache){
+      this.logger.log(`User cache hit: ${pid}`)
+      return userDtoCache;
     }
-    const user = await this.userRepository.findOne({pid});
-    this.logger.log(`Setting user cache: ${pid}`);
-    await this.cacheManager.set(pid, user, 1000);
-    return user;
+    const userDto = await this.userRepository.findOne({pid}, {
+      fields: ["pid"]
+    })
+    this.logger.log(`User cache miss: ${pid}`);
+    await this.cacheManager.set(UserCacheKey(pid), userDto, 1000*10);
+    return userDto
+  }
+
+  private async invokeCacheSideEffect(pid: string) {
+    await this.cacheManager.del(UserCacheKey(pid));
   }
 }

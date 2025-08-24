@@ -78,7 +78,7 @@ export class LicenseService {
         })
 
         this.logger.log("Setting machine cache");
-        await this.cacheManager.set(fingerPrint, license);
+        await this.cacheManager.set(fingerPrint, license, 1000);
         return license;
     }
 

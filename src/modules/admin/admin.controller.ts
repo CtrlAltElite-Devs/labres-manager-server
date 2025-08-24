@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Patch, Post, Req } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
 import { AdminLoginDto } from 'src/modules/admin/dto/admin-login.dto';
 import { AdminRegisterDto } from 'src/modules/admin/dto/admin-register.dto';
-import { AdminOnly, SuperAdminOnly } from 'src/guards/application/application-guard.decorators';
+import { SuperAdminOnly } from 'src/guards/application/application-guard.decorators';
+import { ACCESS_TOKEN } from 'src/configurations/common-configuration';
+import { AdminUpdatePasswordDto } from './dto/admin-update-password.dto';
+import { AuthenticatedRequest } from 'src/guards/application/application-requests';
 
 @Controller('auth/admin')
 export class AdminController {
@@ -24,11 +26,10 @@ export class AdminController {
     return response;
   }
 
-  @Get("protected")
+  @Patch('update-password')
   @ApiBearerAuth(ACCESS_TOKEN)
-  @AdminOnly()
-  protected(){
-    return "hello from protected"
+  @SuperAdminOnly()
+  async updateAdminPassword(@Req() request: AuthenticatedRequest,@Body() body: AdminUpdatePasswordDto){
+    await this.adminService.UpdateAdminPassword(request.admin!.id, body);
   }
-
 }

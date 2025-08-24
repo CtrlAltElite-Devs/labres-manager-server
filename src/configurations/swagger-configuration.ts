@@ -1,8 +1,8 @@
 import { INestApplication } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { ACCESS_TOKEN } from "./bootstrap-configuration";
+import { ACCESS_TOKEN } from "./common-configuration";
 
-export function UseSwagger(app: INestApplication<any>) {
+export default function UseSwagger(app: INestApplication<any>) {
   const config = new DocumentBuilder()
     .setTitle('Labres API')
     .setDescription('This is the Official Labres Api')

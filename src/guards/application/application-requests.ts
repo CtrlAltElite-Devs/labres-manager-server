@@ -1,8 +1,8 @@
 import { Request } from "express"
-import { Admin } from "src/entities/admin.entity"
-import { User } from "src/entities/user.entity"
+import { AdminDto } from "src/modules/admin/dto/admin.dto";
+import { UserDto } from "src/modules/auth/dto/user.dto";
 
 export interface AuthenticatedRequest extends Request{
-    user? : User;
-    admin?: Admin;
+    user? : UserDto;
+    admin?: AdminDto;
 }  

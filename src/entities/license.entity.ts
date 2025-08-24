@@ -6,7 +6,7 @@ export class License {
     @PrimaryKey({type: "uuid"})
     licenseId = v4();
 
-    @Property()
+    @Property({unique: true})
     licenseKey: string;
 
     @Property()

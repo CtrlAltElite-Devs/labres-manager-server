@@ -157,6 +157,15 @@
           "nullable": false,
           "length": 6,
           "mappedType": "datetime"
+        },
+        "adminId": {
+          "name": "adminId",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "uuid"
         }
       },
       "name": "feature_flag",
@@ -184,7 +193,21 @@
         }
       ],
       "checks": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "feature_flag_adminId_foreign": {
+          "constraintName": "feature_flag_adminId_foreign",
+          "columnNames": [
+            "adminId"
+          ],
+          "localTableName": "public.feature_flag",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.admin",
+          "deleteRule": "set null",
+          "updateRule": "cascade"
+        }
+      },
       "nativeEnums": {
         "admin_role": {
           "name": "admin_role",
@@ -251,6 +274,16 @@
       "name": "license",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "license_key"
+          ],
+          "composite": false,
+          "keyName": "license_license_key_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
         {
           "keyName": "license_pkey",
           "columnNames": [

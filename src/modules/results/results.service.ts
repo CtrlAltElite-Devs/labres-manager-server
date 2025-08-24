@@ -4,9 +4,11 @@ import { BadRequestException, Injectable, Logger, NotFoundException, Unauthorize
 import { TestResult, TestResultWithoutPdf } from 'src/entities/test-result.entity';
 import { User } from 'src/entities/user.entity';
 import { CreateResultResponseDto } from './dto/create-result-response.dto';
-import { Admin } from 'src/entities/admin.entity';
+// import { Admin } from 'src/entities/admin.entity';
 import { TestResultDto, TestResultMinimalDto } from './dto/test-result-dto';
 import { License } from 'src/entities/license.entity';
+import { AdminDto } from '../admin/dto/admin.dto';
+import { UserDto } from '../auth/dto/user.dto';
 
 @Injectable()
 export class ResultsService {
@@ -82,7 +84,7 @@ export class ResultsService {
     return CreateResultResponseDto.Map(testResult);
   }
 
-  async GetTestResults(user?: User, admin?: Admin) {
+  async GetTestResults(user?: UserDto, admin?: AdminDto) {
     let results: TestResultWithoutPdf[];
     if (admin) {
       console.log("entered as admin")
@@ -118,14 +120,14 @@ export class ResultsService {
     return testResults;
   }
 
-  async GetTestResultById(id: string, user: User){
+  async GetTestResultById(id: string, pid: string){
     const testResult = await this.testResultRepository.findOne({id: id})
 
     if(testResult === null){
       throw new NotFoundException("Result not found");
     }
 
-    if(testResult.user.pid !== user.pid){
+    if(testResult.user.pid !== pid){
       throw new UnauthorizedException("User does not own the result");
     }
 
@@ -159,10 +161,10 @@ export class ResultsService {
     return testResults
   }
 
-  async DeleteRecordsForUser(user: User){
+  async DeleteRecordsForUser(pid: string){
     const result = await this.testResultRepository.nativeDelete({
       user: {
-        pid: user.pid
+        pid: pid
       }
     })
 

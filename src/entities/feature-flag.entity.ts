@@ -1,5 +1,6 @@
-import { Entity, Opt, PrimaryKey, Property } from "@mikro-orm/core";
+import { Entity, ManyToOne, Opt, PrimaryKey, Property } from "@mikro-orm/core";
 import { v4 } from "uuid";
+import { Admin } from "./admin.entity";
 
 @Entity()
 export class FeatureFlag {
@@ -12,7 +13,6 @@ export class FeatureFlag {
     @Property({ nullable: true })
     description?: string;
 
-
     @Property( {default: true})
     isOn: boolean;
 
@@ -21,6 +21,9 @@ export class FeatureFlag {
 
     @Property()
     updatedAt: Date & Opt = new Date();
+
+    @ManyToOne(() => Admin, { nullable: true, fieldName: "adminId" })
+    updatedBy: Admin
     
     toggle(){
         this.isOn = !this.isOn;

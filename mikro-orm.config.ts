@@ -1,8 +1,8 @@
 import { defineConfig, PostgreSqlDriver } from "@mikro-orm/postgresql";
-import { entities } from "./entities/index.entity";
 import { Migrator } from "@mikro-orm/migrations";
 import { SeedManager } from "@mikro-orm/seeder";
 import "dotenv/config";
+import { entities } from './src/entities/index.entity';
 
 const getConnectionStrategy = () => {
   const isNeon = process.env.DATABASE_URL?.includes('neon.tech');
@@ -29,4 +29,12 @@ export default defineConfig({
     connection: getConnectionStrategy()
   },
   debug: true,
+  migrations: {
+    path: "dist/src/migrations",
+    pathTs: "src/migrations",
+  },
+  seeder: {
+    path: "dist/src/seeders",
+    pathTs: "src/seeders"
+  }
 });
