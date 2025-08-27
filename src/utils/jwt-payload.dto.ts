@@ -25,3 +25,20 @@ export class JwtUserPayloadDto {
         }
     }
 }
+
+export class JwtHelper {
+    static Extract(payload: JwtUserPayloadDto) : JwtUserPayloadDto{
+        if(payload.isAdmin){
+            return {
+                adminId: payload.adminId,
+                isAdmin: true
+            }   
+        } else {
+            return {
+                pid: payload.pid,
+                dob: payload.dob,
+                isAdmin: false
+            }
+        }
+    }
+}

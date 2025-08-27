@@ -6,12 +6,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthenticatedRequest } from './application-requests';
-import jwt from 'jsonwebtoken';
-
-import { JwtUserPayloadDto } from 'src/utils/jwt-payload.dto';
-import { ConfigService } from '@nestjs/config';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { AdminService } from 'src/modules/admin/admin.service';
+import { CustomJwtService } from 'src/modules/common/custom-jwt-service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -20,7 +17,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     private readonly authService: AuthService,
     private readonly adminService: AdminService,
-    private readonly config: ConfigService,
+    private readonly jwtService: CustomJwtService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -32,7 +29,13 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const token = authorization?.split(' ')[1];
+    let token = authorization?.split(' ')[1];
+    this.logger.log(`Bearer token: ${token}`);
+
+    if(!token){
+      token = request.cookies["token"] as string
+      this.logger.log(`cookie token: ${token}`);
+    }
 
     if (!token) {
       this.logger.log('No token provided');
@@ -40,12 +43,8 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const decoded = jwt.verify(token, this.config.get<string>('JWT_SECRET'));
-      //this.logger.log(`decoded jwt is ${decoded}`);
-      const decodedPayload = decoded as JwtUserPayloadDto;
-      //this.logger.log(`decoded payload is ${JSON.stringify(decodedPayload)}`);
-
+      const decodedPayload = await this.jwtService.VerifyToken(token);
+      
       if (decodedPayload.isAdmin) {
         // find admin
         const admin = await this.adminService.GetAdminByIdForGuard(
@@ -71,8 +70,7 @@ export class AuthGuard implements CanActivate {
 
       return true;
     } catch {
-      this.logger.log('Decoding failed');
-      throw new UnauthorizedException('Malformed Access Token');
+      throw new UnauthorizedException('Malformed or Expired Access Token');
     }
   }
 }

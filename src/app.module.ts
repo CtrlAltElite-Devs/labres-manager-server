@@ -9,11 +9,17 @@ import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { LicenseModule } from './modules/license/license.module';
 import { FeatureFlagModule } from './modules/feature-flag/feature-flag.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     AuthModule, ResultsModule, AdminModule, LicenseModule, FeatureFlagModule,
     MikroOrmModule.forRootAsync({useFactory: () => config}),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '300s'}
+    }),
     ConfigModule.forRoot({isGlobal: true}),
     CacheModule.register({isGlobal: true})
   ],
