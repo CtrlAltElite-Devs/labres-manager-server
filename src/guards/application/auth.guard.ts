@@ -24,22 +24,30 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const authorization = request.headers.authorization;
 
-    if (!authorization?.startsWith('Bearer')) {
-      this.logger.log('No Bearer token provided');
-      throw new UnauthorizedException();
+    let token: string | undefined;
+
+    // 1. Try to get Bearer token
+    if (authorization?.startsWith("Bearer ")) {
+      token = authorization.split(" ")[1];
+      this.logger.log(`Bearer token provided: ${token}`);
+    } else {
+      this.logger.log("No Bearer token provided in headers");
     }
 
-    let token = authorization?.split(' ')[1];
-    this.logger.log(`Bearer token: ${token}`);
-
-    if(!token){
-      token = request.cookies["token"] as string
-      this.logger.log(`cookie token: ${token}`);
-    }
-
+    // 2. If no Bearer token, try cookie
     if (!token) {
-      this.logger.log('No token provided');
-      throw new UnauthorizedException();
+      token = request.cookies["token"] as string;
+      if (token) {
+        this.logger.log(`Cookie token provided: ${token}`);
+      } else {
+        this.logger.log("No token found in cookies");
+      }
+    }
+
+    // 3. If still no token, reject
+    if (!token) {
+      this.logger.log("No token provided at all (neither Bearer nor cookie)");
+      throw new UnauthorizedException("Authentication token missing");
     }
 
     try {

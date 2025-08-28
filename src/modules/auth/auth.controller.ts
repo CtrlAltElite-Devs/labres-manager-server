@@ -14,12 +14,17 @@ import { RefreshTokenRequest } from 'src/guards/cookies/refresh-token-request';
 import { MetaDataInterceptor } from 'src/interceptors/metadata-interceptor';
 import { EnrichedRequest } from 'src/interceptors/interceptors.common';
 import { RefreshTokenDto } from './dto/refresh-token/refresh-token.dto';
-// import { UAParser } from 'ua-parser-js';
+import { ConfigService } from '@nestjs/config';
+import { IS_DEV_OR_STAGING } from 'src/utils/environment';
+
 
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly config: ConfigService
+  ) {}
 
   @Post("login")
   async login(@Body() request: LoginDto) {
@@ -42,7 +47,7 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: 'lax',
-        path: '/api/v1/auth/refresh'
+        path: IS_DEV_OR_STAGING ?  '/' : '/api/v1/auth/refresh'
       });
 
       response.cookie('token', authResponse.token, {
@@ -55,6 +60,26 @@ export class AuthController {
       authResponse.token = "";
     }
     return authResponse;
+  }
+
+  @Post("log-out")
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth(ACCESS_TOKEN)
+  async logOut(@Req() request: AuthenticatedRequest, @Res() response : Response){
+    const { user, admin } = request;
+    const userId = user ? user.pid : admin?.id
+    await this.authService.LogOut(userId!)
+    response.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true,
+      path: '/', 
+    });
+    response.clearCookie('token', {
+      httpOnly: true,
+      secure: true,
+      path: '/',
+    });
+    return response.send({ message: "Logged out successfully" });
   }
 
   @Get('me')

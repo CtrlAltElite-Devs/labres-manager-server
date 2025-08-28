@@ -91,4 +91,12 @@ export class RefreshTokenService {
             newRefreshToken 
         };
     }
+
+    async RemoveRefreshToken(userId: string){
+        const deleted = await this.refreshTokenRepository.nativeDelete({
+            userId
+        })
+        this.logger.log(`Deleted ${deleted} Refresh tokens`);
+    }
 }
+

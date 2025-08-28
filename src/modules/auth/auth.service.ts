@@ -142,6 +142,10 @@ export class AuthService {
     return await this.userRepository.findOne({pid});
   }
 
+  async LogOut(userId: string){
+    await this.refreshTokenService.RemoveRefreshToken(userId);
+  }
+
   async GetUserByIdForGuard(pid: string){
     const userDtoCache = await this.cacheManager.get<UserDto>(UserCacheKey(pid));
     if(userDtoCache){

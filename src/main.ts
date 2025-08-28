@@ -6,10 +6,11 @@ import ApplyApiVersioning from './configurations/api-versioning-configuration';
 import ApplyCorsConfigurations from "./configurations/cors-configuration";
 import UseSwagger from './configurations/swagger-configuration';
 import InitializeDatabase from "./configurations/database-initializiation";
+import { IS_DEV_OR_STAGING } from "./utils/environment";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  if (process.env.APP_ENV === "staging" || process.env.NODE_ENV === "development") {
+  if (IS_DEV_OR_STAGING) {
     UseSwagger(app);
   }
   
