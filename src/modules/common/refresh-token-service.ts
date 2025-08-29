@@ -17,11 +17,7 @@ export class RefreshTokenService {
     ){}
 
     async Store(userId: string, refreshToken: string, metaData: RequestMetadata) {
-        this.logger.log(`to hash token: ${refreshToken}`)
-        // const tokenHashed = await bcrypt.hash(refreshToken, 10);
         const tokenHashed = refreshToken;
-
-
         const newToken = new RefreshToken();
         newToken.userId = userId;
         newToken.browserName = metaData.browserName;
@@ -76,8 +72,10 @@ export class RefreshTokenService {
         // expired
         if (tokenRecord.expiresAt.getTime() <= Date.now()) {
             this.logger.log("Refresh Token Db Record Expired");
+            await this.refreshTokenRepository.nativeDelete(tokenRecord);
             throw new UnauthorizedException()
         }
+
         const deleted = await this.refreshTokenRepository.nativeDelete(tokenRecord);
         this.logger.log(`Deleted ${deleted} Refresh tokens`);
         const payload = JwtHelper.Extract(decoded);

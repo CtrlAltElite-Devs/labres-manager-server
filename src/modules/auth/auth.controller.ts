@@ -65,7 +65,7 @@ export class AuthController {
   @Post("log-out")
   @UseGuards(AuthGuard)
   @ApiBearerAuth(ACCESS_TOKEN)
-  async logOut(@Req() request: AuthenticatedRequest, @Res() response : Response){
+  async logOut(@Req() request: AuthenticatedRequest, @Res({passthrough: true}) response : Response){
     const { user, admin } = request;
     const userId = user ? user.pid : admin?.id
     await this.authService.LogOut(userId!)
@@ -79,7 +79,7 @@ export class AuthController {
       secure: true,
       path: '/',
     });
-    return response.send({ message: "Logged out successfully" });
+    return { message: "Logged out Succesfully"}
   }
 
   @Get('me')
