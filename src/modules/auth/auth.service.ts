@@ -24,7 +24,7 @@ import { LoginResponseV2Dto } from './dto/login/login-response-v2.dto';
 import { LoginResponseDto } from './dto/login/login-response.dto';
 import { CustomJwtService } from '../common/custom-jwt-service';
 import { RefreshTokenService } from '../common/refresh-token-service';
-import { RequestMetadata } from 'src/interceptors/interceptors.common';
+import { RequestMetadata } from 'src/security/common/metadata-request';
 import { RefreshTokenResponseDto } from './dto/refresh-token/refresh-token-response.dto';
 
 

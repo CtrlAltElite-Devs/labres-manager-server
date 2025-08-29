@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from "@nestjs/common";
 import { UAParser } from 'ua-parser-js';
-import { EnrichedRequest } from "./interceptors.common";
+import { EnrichedRequest } from "../common/metadata-request";
 
 @Injectable()
 export class MetaDataInterceptor implements NestInterceptor {

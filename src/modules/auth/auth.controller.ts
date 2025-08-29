@@ -8,11 +8,11 @@ import { AuthenticatedRequest } from 'src/security/common/application-requests';
 import { Response } from 'express';
 import { RefreshTokenInterceptor } from 'src/security/interceptors/refresh-token.interceptor';
 import { EnrichedRefreshTokenRequest } from 'src/security/common/refresh-token-request';
-import { MetaDataInterceptor } from 'src/interceptors/metadata-interceptor';
-import { EnrichedRequest } from 'src/interceptors/interceptors.common';
+import { EnrichedRequest } from 'src/security/common/metadata-request';
 import { RefreshTokenDto } from './dto/refresh-token/refresh-token.dto';
 import { UseAuthenticationGuard } from 'src/security/decorators/index.decorators';
 import { CookieHelpers } from 'src/helpers/cookie-helpers/cookie-helper';
+import { MetaDataInterceptor } from 'src/security/interceptors/metadata-interceptor';
 
 @Controller('auth')
 export class AuthController {
