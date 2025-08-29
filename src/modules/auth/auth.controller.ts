@@ -1,29 +1,23 @@
-import { Body, Controller, Get, Post, Put, Query, Req, Res, UseGuards, UseInterceptors, Version } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query, Req, Res, UseInterceptors, Version } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CheckPidDto } from './dto/check-pid.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { AuthenticatedRequest } from 'src/guards/application/application-requests';
-import { AuthGuard } from 'src/guards/application/auth.guard';
-import { ACCESS_TOKEN } from 'src/configurations/common-configuration';
-import { Request, Response } from 'express';
-import { RefreshTokenGuard } from 'src/guards/cookies/refresh-token-guard';
-import { RefreshTokenRequest } from 'src/guards/cookies/refresh-token-request';
+import { AuthenticatedRequest } from 'src/security/common/application-requests';
+import { Response } from 'express';
+import { RefreshTokenInterceptor } from 'src/security/interceptors/refresh-token.interceptor';
+import { EnrichedRefreshTokenRequest } from 'src/security/common/refresh-token-request';
 import { MetaDataInterceptor } from 'src/interceptors/metadata-interceptor';
 import { EnrichedRequest } from 'src/interceptors/interceptors.common';
 import { RefreshTokenDto } from './dto/refresh-token/refresh-token.dto';
-import { ConfigService } from '@nestjs/config';
-import { IS_DEV_OR_STAGING } from 'src/utils/environment';
-
-
+import { UseAuthenticationGuard } from 'src/security/decorators/index.decorators';
+import { CookieHelpers } from 'src/helpers/cookie-helpers/cookie-helper';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly config: ConfigService
   ) {}
 
   @Post("login")
@@ -36,26 +30,17 @@ export class AuthController {
   @UseInterceptors(MetaDataInterceptor)
   @Version("2")
   async loginV2(
-    @Body() body: LoginDto, 
-    @Res({passthrough: true}) response: Response,
     @Query('useCookie') useCookie: boolean,
-    @Req() request: EnrichedRequest
+    @Body() body: LoginDto, 
+    @Req() request: EnrichedRequest,
+    @Res({passthrough: true}) response: Response,
   ){
     const authResponse = await this.authService.LoginV2(body, request.metaData!);
     if(useCookie){
-      response.cookie('refreshToken', authResponse.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        path: IS_DEV_OR_STAGING ?  '/' : '/api/v1/auth/refresh'
+      CookieHelpers.SetTokens(response, {
+        token: authResponse.token,
+        refreshToken: authResponse.refreshToken
       });
-
-      response.cookie('token', authResponse.token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-      });
-
       authResponse.refreshToken = "";
       authResponse.token = "";
     }
@@ -63,59 +48,40 @@ export class AuthController {
   }
 
   @Post("log-out")
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth(ACCESS_TOKEN)
+  @UseAuthenticationGuard()
   async logOut(@Req() request: AuthenticatedRequest, @Res({passthrough: true}) response : Response){
     const { user, admin } = request;
     const userId = user ? user.pid : admin?.id
     await this.authService.LogOut(userId!)
-    response.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: true,
-      path: '/', 
-    });
-    response.clearCookie('token', {
-      httpOnly: true,
-      secure: true,
-      path: '/',
-    });
+    CookieHelpers.RemoveTokens(response);
     return { message: "Logged out Succesfully"}
   }
 
   @Get('me')
-  @UseGuards(AuthGuard)
+  @UseAuthenticationGuard()
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(5)
-  @ApiBearerAuth(ACCESS_TOKEN)
   me(@Req() request: AuthenticatedRequest) {
     return request.user
   }
 
   @Post("refresh")
-  @UseGuards(RefreshTokenGuard)
+  @UseInterceptors(RefreshTokenInterceptor)
   @UseInterceptors(MetaDataInterceptor)
   async refresh(
-    @Body() body : RefreshTokenDto,
-    @Req() request: RefreshTokenRequest & EnrichedRequest,
+    @Body() body : RefreshTokenDto, // used for swagger doc
+    @Req() request: EnrichedRefreshTokenRequest,
     @Query('useCookie') useCookie: boolean,
     @Res({passthrough: true}) response: Response,
   ){
+    console.log("refresh token: ", request.refreshToken);
     const refreshTokenResponse = await this.authService.Refresh(request.refreshToken, request.metaData!);
 
     if(useCookie){
-      response.cookie('refreshToken', refreshTokenResponse.refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        path: '/api/v1/auth/refresh'
+      CookieHelpers.SetTokens(response, {
+        token: refreshTokenResponse.token,
+        refreshToken: refreshTokenResponse.refreshToken
       });
-
-      response.cookie('token', refreshTokenResponse.token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-      });
-
       refreshTokenResponse.refreshToken = "";
       refreshTokenResponse.token = "";
     }

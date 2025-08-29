@@ -5,7 +5,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthenticatedRequest } from './application-requests';
+import { AuthenticatedRequest } from '../../security/common/application-requests';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { AdminService } from 'src/modules/admin/admin.service';
 import { CustomJwtService } from 'src/modules/common/custom-jwt-service';

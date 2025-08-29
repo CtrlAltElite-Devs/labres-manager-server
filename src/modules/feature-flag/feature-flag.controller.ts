@@ -1,14 +1,11 @@
 import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { FeatureFlagService } from './feature-flag.service';
-import { SuperAdminOnly } from 'src/guards/application/application-guard.decorators';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { UseSuperAdminOnlyGuard } from 'src/security/decorators/index.decorators';
 import { AddFeatureFlagDto } from './dto/add-feature-flag.dto';
 import { ToggleFeatureFlagDto } from './dto/toggle-feature-flag.dto';
-import { ACCESS_TOKEN } from 'src/configurations/common-configuration';
 
 @Controller('feature-flag')
-@ApiBearerAuth(ACCESS_TOKEN)
-@SuperAdminOnly()
+@UseSuperAdminOnlyGuard()
 export class FeatureFlagController {
   constructor(private readonly featureFlagService: FeatureFlagService) {}
 

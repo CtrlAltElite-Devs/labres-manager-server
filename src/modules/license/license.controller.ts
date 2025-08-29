@@ -1,13 +1,10 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseInterceptors } from '@nestjs/common';
 import { LicenseService } from './license.service';
 import { VerifyLicenseDto } from './dto/verify-license.dto';
-import { AuthenticatedMachineRequest, machineHeaderOptions } from 'src/guards/license/machine-request';
+import { AuthenticatedMachineRequest } from 'src/security/common/machine-request';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { MachineGuard } from 'src/guards/license/machine.guard';
-import { ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
-import { SuperAdminOnly } from 'src/guards/application/application-guard.decorators';
+import { UseMachineGuard, UseSuperAdminOnlyGuard } from 'src/security/decorators/index.decorators';
 import { CreateLicenseDto } from './dto/create-license.dto';
-import { ACCESS_TOKEN } from 'src/configurations/common-configuration';
 
 @Controller('license')
 export class LicenseController {
@@ -21,41 +18,36 @@ export class LicenseController {
   }
 
   @Get()
-  @ApiHeader(machineHeaderOptions)
+  @UseMachineGuard()
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(5)
-  @UseGuards(MachineGuard)
   getLicense(@Req() request: AuthenticatedMachineRequest){
     return request.license
   }
 
   @Post("create")
-  @ApiBearerAuth(ACCESS_TOKEN)
-  @SuperAdminOnly()
+  @UseSuperAdminOnlyGuard()
   async createLicense(@Body() request: CreateLicenseDto){
     const response = await this.licenseService.AddLicense(request);
     return response;
   }
 
   @Patch("revoke/:licenseId")
-  @ApiBearerAuth(ACCESS_TOKEN)
-  @SuperAdminOnly()
+  @UseSuperAdminOnlyGuard()
   async revoke(@Param("licenseId") licenseId: string){
     const response = await this.licenseService.RevokeLicense(licenseId);
     return response;
   }
 
   @Patch("activate/:licenseId")
-  @ApiBearerAuth(ACCESS_TOKEN)
-  @SuperAdminOnly()
+  @UseSuperAdminOnlyGuard()
   async activate(@Param("licenseId") licenseId: string){
     const response = await this.licenseService.ReactivateLicense(licenseId);
     return response;
   }
 
   @Get("all")
-  @ApiBearerAuth(ACCESS_TOKEN)
-  @SuperAdminOnly()
+  @UseSuperAdminOnlyGuard()
   async getAllLicenses(){
     const response = await this.licenseService.GetAllLicenses();
     return response;

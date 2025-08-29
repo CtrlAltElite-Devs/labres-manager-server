@@ -103,7 +103,8 @@ export class AuthService {
     
     return {
       token: newToken,
-      refreshToken: newRefreshToken
+      refreshToken: newRefreshToken,
+      message: "Token refreshed succesfully"
     }
   }
 

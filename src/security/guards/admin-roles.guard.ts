@@ -1,9 +1,8 @@
-// roles.guard.ts
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AdminRole } from 'src/entities/admin.entity';
-import { ROLES_KEY } from './application-guard.decorators';
-import { AuthenticatedRequest } from './application-requests';
+import { AuthenticatedRequest } from '../common/application-requests';
+import { ROLES_KEY } from '../decorators/admin-roles.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {

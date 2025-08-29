@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
-import { AuthenticatedMachineRequest } from "./machine-request";
+import { AuthenticatedMachineRequest } from "../common/machine-request";
 import { MACHINE_ID } from "src/utils/constants";
 import { LicenseService } from "src/modules/license/license.service";
 

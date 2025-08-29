@@ -1,12 +1,13 @@
-import { BadRequestException, CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor, UnauthorizedException } from "@nestjs/common";
+import { Observable } from "rxjs";
 import { RefreshTokenDto } from "src/modules/auth/dto/refresh-token/refresh-token.dto";
-import { RefreshTokenRequest } from "./refresh-token-request";
+import { RefreshTokenRequest } from "src/security/common/refresh-token-request";
 
 @Injectable()
-export class RefreshTokenGuard implements CanActivate{
-    private readonly logger = new Logger(RefreshTokenGuard.name);
+export class RefreshTokenInterceptor implements NestInterceptor{
+    private readonly logger = new Logger(RefreshTokenInterceptor.name);
 
-    canActivate(context: ExecutionContext): boolean  {
+    intercept(context: ExecutionContext, next: CallHandler<any>): Observable<any> | Promise<Observable<any>> {
         const request : RefreshTokenRequest = context.switchToHttp().getRequest();
 
         const body = request.body as RefreshTokenDto;
@@ -20,9 +21,9 @@ export class RefreshTokenGuard implements CanActivate{
             throw new BadRequestException("useCookie parameter cannot go with a Request body");
         }
 
-        const hasRefreshTokenFromBody = body !== undefined;
+        const bodyDefined = body !== undefined;
 
-        if(hasRefreshTokenFromBody && (body.refreshToken !== undefined)){
+        if(bodyDefined && (body.refreshToken !== undefined)){
             this.logger.log(`Body has refresh token: ${body.refreshToken}`)
             request.refreshToken = body.refreshToken!;
         } else {
@@ -31,10 +32,10 @@ export class RefreshTokenGuard implements CanActivate{
             if(refreshTokenFromCookies === ""){
                 throw new UnauthorizedException("Refresh Token Expired");
             }
+            this.logger.log(`Cookie has refresh token: ${refreshTokenFromCookies}`)
             request.refreshToken = refreshTokenFromCookies;
         }
 
-        return true;
+        return next.handle();
     }
-
 }

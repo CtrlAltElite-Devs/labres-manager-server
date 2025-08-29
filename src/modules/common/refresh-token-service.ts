@@ -63,7 +63,7 @@ export class RefreshTokenService {
         // 2. Verify token hash
         // const isSame = await bcrypt.compare(refreshToken, tokenRecord.tokenHashed);
         const isSame = refreshToken === tokenRecord.tokenHashed;
-        this.logger.log(`Refresh token same: ${isSame} refresth token: ${refreshToken}`);
+        this.logger.log(`Refresh token same: ${isSame} refresh token: ${refreshToken} token record: ${tokenRecord.tokenHashed}`);
         if (!isSame) {
             this.logger.log("Refresh Token not the same");
             throw new UnauthorizedException()

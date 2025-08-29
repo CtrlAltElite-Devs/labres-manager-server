@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Logger } from "@nestjs/common";
-import { FEATURE_FLAG_KEY } from "./feature-flag.decorator";
 import { Reflector } from "@nestjs/core";
 import { FeatureFlagService } from "src/modules/feature-flag/feature-flag.service";
+import { FEATURE_FLAG_KEY } from "../decorators/feature-flag.decorator";
 
 @Injectable()
 export class FeatureFlagGuard implements CanActivate {
