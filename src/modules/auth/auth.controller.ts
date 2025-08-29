@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Query, Req, Res, UseInterceptors, Version } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query, Req, Res, UseFilters, UseInterceptors, Version } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CheckPidDto } from './dto/check-pid.dto';
 import { LoginDto } from './dto/login.dto';
@@ -13,6 +13,7 @@ import { RefreshTokenDto } from './dto/refresh-token/refresh-token.dto';
 import { UseAuthenticationGuard } from 'src/security/decorators/index.decorators';
 import { CookieHelpers } from 'src/helpers/cookie-helpers/cookie-helper';
 import { MetaDataInterceptor } from 'src/security/interceptors/metadata-interceptor';
+import { RefreshTokenExceptionFilter } from 'src/security/filters/refresth-token-exception.filter';
 
 @Controller('auth')
 export class AuthController {
@@ -68,13 +69,13 @@ export class AuthController {
   @Post("refresh")
   @UseInterceptors(RefreshTokenInterceptor)
   @UseInterceptors(MetaDataInterceptor)
+  @UseFilters(RefreshTokenExceptionFilter)
   async refresh(
     @Body() body : RefreshTokenDto, // used for swagger doc
     @Req() request: EnrichedRefreshTokenRequest,
     @Query('useCookie') useCookie: boolean,
     @Res({passthrough: true}) response: Response,
   ){
-    console.log("refresh token: ", request.refreshToken);
     const refreshTokenResponse = await this.authService.Refresh(request.refreshToken, request.metaData!);
 
     if(useCookie){
