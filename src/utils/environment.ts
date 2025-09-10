@@ -1,0 +1,1 @@
+export const IS_DEV_OR_STAGING = process.env.APP_ENV === "staging" || process.env.NODE_ENV === "development"

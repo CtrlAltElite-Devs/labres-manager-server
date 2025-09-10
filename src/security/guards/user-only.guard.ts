@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthenticatedRequest } from './application-requests';
+import { AuthenticatedRequest } from '../../security/common/application-requests';
 
 const USER_ONLY_ERROR_MESSAGE = 'This action is restricted to users only';
 

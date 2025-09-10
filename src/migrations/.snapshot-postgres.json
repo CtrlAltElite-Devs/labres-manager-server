@@ -99,6 +99,128 @@
     },
     {
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "feature_name": {
+          "name": "feature_name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "is_on": {
+          "name": "is_on",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "true",
+          "mappedType": "boolean"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "adminId": {
+          "name": "adminId",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "uuid"
+        }
+      },
+      "name": "feature_flag",
+      "schema": "public",
+      "indexes": [
+        {
+          "columnNames": [
+            "feature_name"
+          ],
+          "composite": false,
+          "keyName": "feature_flag_feature_name_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "feature_flag_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "feature_flag_adminId_foreign": {
+          "constraintName": "feature_flag_adminId_foreign",
+          "columnNames": [
+            "adminId"
+          ],
+          "localTableName": "public.feature_flag",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.admin",
+          "deleteRule": "set null",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {
+        "admin_role": {
+          "name": "admin_role",
+          "schema": "public",
+          "items": [
+            "admin",
+            "super_admin"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
         "license_id": {
           "name": "license_id",
           "type": "uuid",
@@ -137,15 +259,157 @@
           "nullable": true,
           "length": 255,
           "mappedType": "string"
+        },
+        "is_revoked": {
+          "name": "is_revoked",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
         }
       },
       "name": "license",
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "license_key"
+          ],
+          "composite": false,
+          "keyName": "license_license_key_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
           "keyName": "license_pkey",
           "columnNames": [
             "license_id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
+      "nativeEnums": {
+        "admin_role": {
+          "name": "admin_role",
+          "schema": "public",
+          "items": [
+            "admin",
+            "super_admin"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "token_hashed": {
+          "name": "token_hashed",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "os": {
+          "name": "os",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "browser_name": {
+          "name": "browser_name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        }
+      },
+      "name": "refresh_token",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "refresh_token_user_id_browser_name_ip_address_os_unique",
+          "columnNames": [
+            "user_id",
+            "browser_name",
+            "ip_address",
+            "os"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "refresh_token_pkey",
+          "columnNames": [
+            "id"
           ],
           "composite": false,
           "constraint": true,
@@ -257,6 +521,15 @@
           "length": 255,
           "mappedType": "string"
         },
+        "machine_license_id": {
+          "name": "machine_license_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
         "test_name": {
           "name": "test_name",
           "type": "varchar(255)",
@@ -322,6 +595,18 @@
             "pid"
           ],
           "referencedTableName": "public.user",
+          "updateRule": "cascade"
+        },
+        "test_result_machine_license_id_foreign": {
+          "constraintName": "test_result_machine_license_id_foreign",
+          "columnNames": [
+            "machine_license_id"
+          ],
+          "localTableName": "public.test_result",
+          "referencedColumnNames": [
+            "license_id"
+          ],
+          "referencedTableName": "public.license",
           "updateRule": "cascade"
         }
       },

@@ -14,10 +14,13 @@ import { License } from 'src/entities/license.entity';
 import { FeatureFlagModule } from '../feature-flag/feature-flag.module';
 import { FeatureFlagService } from '../feature-flag/feature-flag.service';
 import { FeatureFlag } from 'src/entities/feature-flag.entity';
+import { CustomJwtService } from '../common/custom-jwt-service';
+import { RefreshTokenService } from '../common/refresh-token-service';
+import { RefreshToken } from 'src/entities/security/refresh-token.entity';
 
 @Module({
-  imports: [AuthModule, AdminModule, FeatureFlagModule, MikroOrmModule.forFeature([User, TestResult, Admin, License, FeatureFlag])],
+  imports: [AuthModule, AdminModule, FeatureFlagModule, MikroOrmModule.forFeature([User, TestResult, Admin, License, FeatureFlag, RefreshToken])],
   controllers: [ResultsController],
-  providers: [ResultsService, AuthService, AdminService, LicenseService, FeatureFlagService],
+  providers: [ResultsService, AuthService, AdminService, LicenseService, FeatureFlagService, CustomJwtService, RefreshTokenService],
 })
 export class ResultsModule {}

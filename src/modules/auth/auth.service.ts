@@ -12,7 +12,7 @@ import { User } from 'src/entities/user.entity';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import bcrypt from 'bcrypt';
 import { provideToken } from 'src/utils/jwt-utils';
-import { LoginResponseDto } from './dto/login-response.dto';
+
 import { CheckPidResponseDto } from './dto/check-pid-response.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { JwtUserPayloadDto } from '../../utils/jwt-payload.dto';
@@ -20,7 +20,12 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { UserDto } from './dto/user.dto';
 import { UserCacheKey } from 'src/helpers/cache-helpers/user.cache';
-import { LoginResponseV2Dto, UserDtoV2 } from './dto/login-response-v2.dto';
+import { LoginResponseV2Dto } from './dto/login/login-response-v2.dto';
+import { LoginResponseDto } from './dto/login/login-response.dto';
+import { CustomJwtService } from '../common/custom-jwt-service';
+import { RefreshTokenService } from '../common/refresh-token-service';
+import { RequestMetadata } from 'src/security/common/metadata-request';
+import { RefreshTokenResponseDto } from './dto/refresh-token/refresh-token-response.dto';
 
 
 @Injectable()
@@ -32,7 +37,9 @@ export class AuthService {
     private readonly userRepository: EntityRepository<User>,
     private readonly entityManager: EntityManager,
     @Inject(CACHE_MANAGER) 
-    private cacheManager: Cache
+    private cacheManager: Cache,
+    private readonly jwtService: CustomJwtService,
+    private readonly refreshTokenService: RefreshTokenService
   ) {}
 
   async Login(dto: LoginDto): Promise<LoginResponseDto> {
@@ -62,7 +69,7 @@ export class AuthService {
     };
   }
 
-  async LoginV2(dto: LoginDto) : Promise<LoginResponseV2Dto> {
+  async LoginV2(dto: LoginDto, metaData: RequestMetadata) : Promise<LoginResponseV2Dto> {
     const existingUser = await this.userRepository.findOne({
       pid: dto.pid,
     });
@@ -81,17 +88,24 @@ export class AuthService {
       throw new ForbiddenException('Invalid Credentials');
     }
 
-    const token = provideToken(JwtUserPayloadDto.MapUser(existingUser));
+    const payload = JwtUserPayloadDto.MapUser(existingUser);
+    const { token, refreshToken } = await this.jwtService.CreateSignedTokens(payload);
+    await this.refreshTokenService.Store(existingUser.pid, refreshToken, metaData);
 
-    const userDto = new UserDtoV2();
-    userDto.pid = existingUser.pid;
-    userDto.dob = existingUser.dob;
-    userDto.createdAt = existingUser.createdAt;
+    const response = LoginResponseV2Dto.Map(existingUser, token, refreshToken);
 
-    const response = new LoginResponseV2Dto();
-    response.token = token;
-    response.user = userDto;
     return response;
+  }
+
+  async Refresh(refreshToken: string, metaData: RequestMetadata) : Promise<RefreshTokenResponseDto>{
+    const { userId, newToken, newRefreshToken } = await this.refreshTokenService.RemoveAndReturnNewTokens(refreshToken, metaData);
+    await this.refreshTokenService.Store(userId!, newRefreshToken, metaData);
+    
+    return {
+      token: newToken,
+      refreshToken: newRefreshToken,
+      message: "Token refreshed succesfully"
+    }
   }
 
   async CheckPid(pid: string) {
@@ -127,6 +141,10 @@ export class AuthService {
 
   async GetUserById(pid: string) {
     return await this.userRepository.findOne({pid});
+  }
+
+  async LogOut(userId: string){
+    await this.refreshTokenService.RemoveRefreshToken(userId);
   }
 
   async GetUserByIdForGuard(pid: string){

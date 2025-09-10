@@ -5,13 +5,10 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthenticatedRequest } from './application-requests';
-import jwt from 'jsonwebtoken';
-
-import { JwtUserPayloadDto } from 'src/utils/jwt-payload.dto';
-import { ConfigService } from '@nestjs/config';
+import { AuthenticatedRequest } from '../../security/common/application-requests';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { AdminService } from 'src/modules/admin/admin.service';
+import { CustomJwtService } from 'src/modules/common/custom-jwt-service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -20,32 +17,42 @@ export class AuthGuard implements CanActivate {
   constructor(
     private readonly authService: AuthService,
     private readonly adminService: AdminService,
-    private readonly config: ConfigService,
+    private readonly jwtService: CustomJwtService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const authorization = request.headers.authorization;
 
-    if (!authorization?.startsWith('Bearer')) {
-      this.logger.log('No Bearer token provided');
-      throw new UnauthorizedException();
+    let token: string | undefined;
+
+    // 1. Try to get Bearer token
+    if (authorization?.startsWith("Bearer ")) {
+      token = authorization.split(" ")[1];
+      this.logger.log(`Bearer token provided: ${token}`);
+    } else {
+      this.logger.log("No Bearer token provided in headers");
     }
 
-    const token = authorization?.split(' ')[1];
-
+    // 2. If no Bearer token, try cookie
     if (!token) {
-      this.logger.log('No token provided');
-      throw new UnauthorizedException();
+      token = request.cookies["token"] as string;
+      if (token) {
+        this.logger.log(`Cookie token provided: ${token}`);
+      } else {
+        this.logger.log("No token found in cookies");
+      }
+    }
+
+    // 3. If still no token, reject
+    if (!token) {
+      this.logger.log("No token provided at all (neither Bearer nor cookie)");
+      throw new UnauthorizedException("Authentication token missing");
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const decoded = jwt.verify(token, this.config.get<string>('JWT_SECRET'));
-      //this.logger.log(`decoded jwt is ${decoded}`);
-      const decodedPayload = decoded as JwtUserPayloadDto;
-      //this.logger.log(`decoded payload is ${JSON.stringify(decodedPayload)}`);
-
+      const decodedPayload = await this.jwtService.VerifyToken(token);
+      
       if (decodedPayload.isAdmin) {
         // find admin
         const admin = await this.adminService.GetAdminByIdForGuard(
@@ -71,8 +78,7 @@ export class AuthGuard implements CanActivate {
 
       return true;
     } catch {
-      this.logger.log('Decoding failed');
-      throw new UnauthorizedException('Malformed Access Token');
+      throw new UnauthorizedException('Malformed or Expired Access Token');
     }
   }
 }

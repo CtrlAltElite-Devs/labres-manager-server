@@ -5,11 +5,14 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { User } from 'src/entities/user.entity';
 import { AdminService } from '../admin/admin.service';
 import { Admin } from 'src/entities/admin.entity';
+import { CustomJwtService } from '../common/custom-jwt-service';
+import { RefreshTokenService } from '../common/refresh-token-service';
+import { RefreshToken } from 'src/entities/security/refresh-token.entity';
 
 @Module({
-  imports: [MikroOrmModule.forFeature([User, Admin])],
+  imports: [MikroOrmModule.forFeature([User, Admin, RefreshToken])],
   controllers: [AuthController],
-  providers: [AuthService, AdminService],
-  exports: [AuthService]
+  providers: [AuthService, AdminService, CustomJwtService, RefreshTokenService],
+  exports: [AuthService, CustomJwtService]
 })
 export class AuthModule {}

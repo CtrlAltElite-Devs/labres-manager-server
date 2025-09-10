@@ -1,5 +1,6 @@
 import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
-import { FeatureFlagGuard } from './feature-flag.guard';
+import { FeatureFlagGuard } from '../guards/feature-flag.guard';
+
 
 export const FEATURE_FLAG_KEY = 'featureFlag';
 
