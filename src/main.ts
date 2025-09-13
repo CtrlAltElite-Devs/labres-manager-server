@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import ApplyConfigurations from './configurations/bootstrap-configuration';
@@ -7,6 +6,7 @@ import ApplyCorsConfigurations from "./configurations/cors-configuration";
 import UseSwagger from './configurations/swagger-configuration';
 import InitializeDatabase from "./configurations/database-initializiation";
 import { IS_DEV_OR_STAGING } from "./utils/environment";
+import usePostBootstrap from "./configurations/post-bootstrap";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,5 +21,9 @@ async function bootstrap() {
   await InitializeDatabase(app);
 
   await app.listen(process.env.PORT ?? 5001);
+
 }
-bootstrap().catch(console.error);
+
+bootstrap()
+.then(usePostBootstrap)
+.catch(console.error);

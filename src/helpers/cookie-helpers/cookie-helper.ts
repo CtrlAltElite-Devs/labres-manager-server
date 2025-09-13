@@ -12,7 +12,7 @@ export class CookieHelpers {
 
         response.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: IS_PROD_OR_STAGING,                 // required for SameSite=None
+            secure: IS_PROD_OR_STAGING,
             sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax',
             path: '/api/v1/auth/refresh',
         });
@@ -25,18 +25,20 @@ export class CookieHelpers {
     }
 
     static RemoveTokens(response: Response) {
-        response.clearCookie('refreshToken', {
-            httpOnly: true,
-            secure: IS_PROD_OR_STAGING,
-            sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax',
-            path: '/api/v1/auth/refresh',
-        });
-
-        response.clearCookie('token', {
-            httpOnly: true,
-            secure: IS_PROD_OR_STAGING,
-            sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax',
-            path: '/',
-        });
+        try {
+            response.clearCookie('refreshToken', {
+                path: '/api/v1/auth/refresh',
+                secure: IS_PROD_OR_STAGING,
+                sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax'
+            });
+    
+            response.clearCookie('token', {
+                path: '/',
+                secure: IS_PROD_OR_STAGING,
+                sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax'
+            });
+        } catch (error) {
+            console.error("Clear cookie error: ", error);
+        }
     }
 }
