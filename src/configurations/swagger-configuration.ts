@@ -1,6 +1,6 @@
 import { INestApplication } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { ACCESS_TOKEN } from "./common-configuration";
+import { ACCESS_TOKEN, SWAGGER_ENDPOINT } from "./common-configuration";
 
 export default function UseSwagger(app: INestApplication<any>) {
   const config = new DocumentBuilder()
@@ -19,7 +19,7 @@ export default function UseSwagger(app: INestApplication<any>) {
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('openapi', app, documentFactory, {
-    jsonDocumentUrl: 'openapi/json',
+  SwaggerModule.setup(SWAGGER_ENDPOINT, app, documentFactory, {
+    jsonDocumentUrl: `${SWAGGER_ENDPOINT}/json`,
   });
 }
