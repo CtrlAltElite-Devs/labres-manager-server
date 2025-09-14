@@ -15,12 +15,14 @@ export class CookieHelpers {
             secure: IS_PROD_OR_STAGING,
             sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax',
             path: '/api/v1/auth/refresh',
+            domain: '.ctr3.org'
         });
 
         response.cookie('token', token, {
             httpOnly: true,
             secure: IS_PROD_OR_STAGING,
             sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax',
+            domain: '.ctr3.org'
         });
     }
 
@@ -29,13 +31,15 @@ export class CookieHelpers {
             response.clearCookie('refreshToken', {
                 path: '/api/v1/auth/refresh',
                 secure: IS_PROD_OR_STAGING,
-                sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax'
+                sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax',
+                domain: '.ctr3.org'
             });
     
             response.clearCookie('token', {
                 path: '/',
                 secure: IS_PROD_OR_STAGING,
-                sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax'
+                sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax',
+                domain: '.ctr3.org'
             });
         } catch (error) {
             console.error("Clear cookie error: ", error);
