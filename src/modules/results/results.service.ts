@@ -48,7 +48,7 @@ export class ResultsService {
     const testDate = new Date(testDateStr);
     if (isNaN(testDate.getTime())) {
       throw new BadRequestException(
-        `Invalid test date ${testDate.getTime()}, Exptected YYYY-MM-DD`,
+        `Invalid test date ${testDate.getTime()}, Expected YYYY-MM-DD`,
       );
     }
 
