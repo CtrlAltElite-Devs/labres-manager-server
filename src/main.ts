@@ -8,8 +8,11 @@ import InitializeDatabase from "./configurations/database-initializiation";
 import { IS_DEV_OR_STAGING } from "./utils/environment";
 import usePostBootstrap from "./configurations/post-bootstrap";
 
-async function bootstrap() {
+async function bootstrap() { 
   const app = await NestFactory.create(AppModule);
+
+  await InitializeDatabase(app);
+
   if (IS_DEV_OR_STAGING) {
     UseSwagger(app);
   }
@@ -18,10 +21,8 @@ async function bootstrap() {
   ApplyCorsConfigurations(app);
   ApplyApiVersioning(app);
   
-  await InitializeDatabase(app);
-
+  app.enableShutdownHooks();
   await app.listen(process.env.PORT ?? 5001);
-
 }
 
 bootstrap()
