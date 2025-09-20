@@ -49,7 +49,11 @@ export class AdminService {
         const { token } = await this.jwtService.CreateSignedTokens(payload);
 
         const responseDto = new AdminLoginResponseDto();
-        responseDto.admin = admin;
+        responseDto.admin = {
+            id: admin.email,
+            email: admin.email,
+            role: admin.role
+        };
         responseDto.token = token;
         
         return responseDto;

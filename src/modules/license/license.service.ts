@@ -1,6 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { License } from 'src/entities/license.entity';
 import { VerifyLicenseDto } from './dto/verify-license.dto';
 import { VerifyLicenseResponseDto } from './dto/verify-license-response.dto';
@@ -9,16 +7,19 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CreateLicenseDto } from './dto/create-license.dto';
 import { RevokeLicenseResponseDto as StatusLicenseResponseDto } from './dto/revoke-license-response.dto';
+import LicenseRepository from 'src/repositories/license.repository';
+import { UnitOfWork } from '../common/unit-of-work';
 
 @Injectable()
 export class LicenseService {
     private readonly logger = new Logger(LicenseService.name);
 
     constructor(
-        @InjectRepository(License)
-        private readonly licenseRepository: EntityRepository<License>,
+        private readonly licenseRepository: LicenseRepository,
         
         private readonly em: EntityManager,
+
+        private readonly unitOfWork: UnitOfWork,
 
         @Inject(CACHE_MANAGER) 
         private cacheManager: Cache
@@ -57,7 +58,7 @@ export class LicenseService {
 
         // First-time activation
         license.fingerPrint = fingerPrint;
-        await this.em.flush();
+        await this.unitOfWork.Commit();
 
         return {
             success: true,
@@ -78,7 +79,9 @@ export class LicenseService {
         })
 
         this.logger.log("Setting machine cache");
-        await this.cacheManager.set(fingerPrint, license, 1000);
+        if(license !== null){
+            await this.cacheManager.set(fingerPrint, license, 1000*10);
+        }
         return license;
     }
 
@@ -94,11 +97,9 @@ export class LicenseService {
         }
 
         // add license
-        const newLicense = new License();
-        newLicense.licenseKey = dto.licenseKey;
-
-        // persist
-        await this.licenseRepository.insert(newLicense);
+        const newLicense = License.Create(dto.licenseKey);
+        this.licenseRepository.Add(newLicense);
+        await this.unitOfWork.Commit();
 
         // return created license
         return newLicense;
@@ -115,9 +116,10 @@ export class LicenseService {
             throw new BadRequestException("License already revoked")
         }
 
-        license.isRevoked = true;
-        await this.em.flush();
-        await this.InvokeCachedLicenseSideEffect(license.fingerPrint);
+        license.Revoke();
+        await this.unitOfWork.Commit({
+            invalidateKey: license.fingerPrint
+        })
 
         return {
             success: true,
@@ -136,9 +138,10 @@ export class LicenseService {
             throw new BadRequestException("License is already activated")
         }
 
-        license.isRevoked = false;
-        await this.em.flush();
-        await this.InvokeCachedLicenseSideEffect(license.fingerPrint);
+        license.Reactivate();
+        await this.unitOfWork.Commit({
+            invalidateKey: license.fingerPrint
+        })
 
         return {
             success: true,
@@ -150,10 +153,4 @@ export class LicenseService {
         const licenses = await this.licenseRepository.findAll({orderBy: {createdAt: "DESC"}});
         return licenses;
     }
-
-    private async InvokeCachedLicenseSideEffect(fingerPrint: string){
-        this.logger.log("License updated removing cached license for: " + fingerPrint);
-        await this.cacheManager.del(fingerPrint);
-    }
-
 }

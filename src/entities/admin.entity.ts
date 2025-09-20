@@ -2,7 +2,6 @@ import { Entity, EntityRepositoryType, Enum, Opt, PrimaryKey, Property, Unique }
 import { AdminRepository } from "src/repositories/admin.repository";
 import { v4 } from "uuid";
 
-// todo make everything gamit ani para naa tay repository layer
 @Entity({ repository: () => AdminRepository })
 export class Admin {
     [EntityRepositoryType]? : AdminRepository

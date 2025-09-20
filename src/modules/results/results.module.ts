@@ -17,10 +17,11 @@ import { FeatureFlag } from 'src/entities/feature-flag.entity';
 import { CustomJwtService } from '../common/custom-jwt-service';
 import { RefreshTokenService } from '../common/refresh-token-service';
 import { RefreshToken } from 'src/entities/security/refresh-token.entity';
+import { UnitOfWork } from '../common/unit-of-work';
 
 @Module({
   imports: [AuthModule, AdminModule, FeatureFlagModule, MikroOrmModule.forFeature([User, TestResult, Admin, License, FeatureFlag, RefreshToken])],
   controllers: [ResultsController],
-  providers: [ResultsService, AuthService, AdminService, LicenseService, FeatureFlagService, CustomJwtService, RefreshTokenService],
+  providers: [ResultsService, AuthService, AdminService, LicenseService, FeatureFlagService, CustomJwtService, RefreshTokenService, UnitOfWork],
 })
 export class ResultsModule {}

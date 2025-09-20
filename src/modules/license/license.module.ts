@@ -8,11 +8,12 @@ import { AdminService } from '../admin/admin.service';
 import { Admin } from 'src/entities/admin.entity';
 import { RefreshTokenService } from '../common/refresh-token-service';
 import { RefreshToken } from 'src/entities/security/refresh-token.entity';
+import { UnitOfWork } from '../common/unit-of-work';
 
 @Module({
   imports: [AuthModule, MikroOrmModule.forFeature([License, Admin, RefreshToken])],
   controllers: [LicenseController],
-  providers: [LicenseService, AdminService, RefreshTokenService],
+  providers: [LicenseService, AdminService, RefreshTokenService, UnitOfWork],
   exports: [LicenseService]
 })
 export class LicenseModule {}

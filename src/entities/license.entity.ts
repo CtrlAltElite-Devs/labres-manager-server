@@ -1,8 +1,11 @@
-import { Entity, Opt, PrimaryKey, Property } from "@mikro-orm/core";
+import { Entity, EntityRepositoryType, Opt, PrimaryKey, Property } from "@mikro-orm/core";
+import LicenseRepository from "src/repositories/license.repository";
 import { v4 } from "uuid";
 
-@Entity()
+@Entity({repository: () => LicenseRepository})
 export class License {
+    [EntityRepositoryType] ? : LicenseRepository
+
     @PrimaryKey({type: "uuid"})
     licenseId = v4();
 
@@ -17,4 +20,18 @@ export class License {
 
     @Property({default: false })
     isRevoked: boolean
+
+    Revoke(){
+        this.isRevoked = true;
+    }
+
+    Reactivate(){
+        this.isRevoked = false;
+    }
+
+    static Create(licenseKey: string) : License{
+        const newLicense = new License();
+        newLicense.licenseKey = licenseKey;
+        return newLicense;
+    }
 }
