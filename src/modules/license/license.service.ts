@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { License } from 'src/entities/license.entity';
 import { VerifyLicenseDto } from './dto/verify-license.dto';
 import { VerifyLicenseResponseDto } from './dto/verify-license-response.dto';

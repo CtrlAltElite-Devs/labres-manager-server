@@ -9,13 +9,13 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { AdminDto } from './dto/admin.dto';
 import { AdminCacheKey } from 'src/helpers/cache-helpers/admin.cache';
-import { EntityManager } from '@mikro-orm/postgresql';
 import { AdminUpdatePasswordDto } from './dto/admin-update-password.dto';
 import { AdminRepository } from 'src/repositories/admin.repository';
 import { RequestMetadata } from 'src/security/common/metadata-request';
 import { CustomJwtService } from '../common/custom-jwt-service';
 import { RefreshTokenService } from '../common/refresh-token-service';
 import { RefreshTokenResponseDto } from '../auth/dto/refresh-token/refresh-token-response.dto';
+import { UnitOfWork } from '../common/unit-of-work';
 
 @Injectable()
 export class AdminService {
@@ -23,7 +23,7 @@ export class AdminService {
 
     constructor(
         private readonly adminRepository: AdminRepository,
-        private readonly em: EntityManager,
+        private readonly unitOfWork: UnitOfWork,
         private readonly jwtService: CustomJwtService,
         private readonly refresthTokenService: RefreshTokenService,
         @Inject(CACHE_MANAGER) 
@@ -108,7 +108,8 @@ export class AdminService {
         newAdmin.password = hashedPassword;
         newAdmin.role = AdminRole.ADMIN;
 
-        await this.adminRepository.insert(newAdmin);
+        this.adminRepository.create(newAdmin);
+        await this.unitOfWork.Commit();
 
         return newAdmin;
     }
@@ -147,8 +148,9 @@ export class AdminService {
             throw new BadRequestException();
         
         admin.password = await bcrypt.hash(password, 10);
-        await this.em.flush();
-        await this.invokeCacheSideEffect(adminId);
+        await this.unitOfWork.Commit({
+            invalidateKey: adminId
+        })
     }
 
     async AdminLogOut(adminId: string){

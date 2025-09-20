@@ -8,11 +8,12 @@ import { Admin } from 'src/entities/admin.entity';
 import { CustomJwtService } from '../common/custom-jwt-service';
 import { RefreshTokenService } from '../common/refresh-token-service';
 import { RefreshToken } from 'src/entities/security/refresh-token.entity';
+import { UnitOfWork } from '../common/unit-of-work';
 
 @Module({
   imports: [MikroOrmModule.forFeature([User, Admin, RefreshToken])],
   controllers: [AuthController],
-  providers: [AuthService, AdminService, CustomJwtService, RefreshTokenService],
+  providers: [AuthService, AdminService, CustomJwtService, RefreshTokenService, UnitOfWork],
   exports: [AuthService, CustomJwtService]
 })
 export class AuthModule {}

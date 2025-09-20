@@ -20,8 +20,20 @@ import { RefreshToken } from 'src/entities/security/refresh-token.entity';
 import { UnitOfWork } from '../common/unit-of-work';
 
 @Module({
-  imports: [AuthModule, AdminModule, FeatureFlagModule, MikroOrmModule.forFeature([User, TestResult, Admin, License, FeatureFlag, RefreshToken])],
+  imports: [
+    AuthModule, 
+    AdminModule, 
+    FeatureFlagModule, 
+    MikroOrmModule.forFeature([User, TestResult, Admin, License, FeatureFlag, RefreshToken])],
   controllers: [ResultsController],
-  providers: [ResultsService, AuthService, AdminService, LicenseService, FeatureFlagService, CustomJwtService, RefreshTokenService, UnitOfWork],
+  providers: [
+    ResultsService, 
+    AuthService, 
+    AdminService, 
+    LicenseService, 
+    FeatureFlagService, 
+    CustomJwtService, 
+    RefreshTokenService, 
+    UnitOfWork],
 })
 export class ResultsModule {}

@@ -4,11 +4,11 @@ import { BadRequestException, Injectable, Logger, NotFoundException, Unauthorize
 import { TestResult, TestResultWithoutPdf } from 'src/entities/test-result.entity';
 import { User } from 'src/entities/user.entity';
 import { CreateResultResponseDto } from './dto/create-result-response.dto';
-// import { Admin } from 'src/entities/admin.entity';
 import { TestResultDto, TestResultMinimalDto } from './dto/test-result-dto';
 import { License } from 'src/entities/license.entity';
 import { AdminDto } from '../admin/dto/admin.dto';
 import { UserDto } from '../auth/dto/user.dto';
+import { TestResultRepository } from 'src/repositories/results.repository';
 
 @Injectable()
 export class ResultsService {
@@ -19,7 +19,7 @@ export class ResultsService {
     private readonly userRepository: EntityRepository<User>,
 
     @InjectRepository(TestResult)
-    private readonly testResultRepository: EntityRepository<TestResult>,
+    private readonly testResultRepository: TestResultRepository,
   ) {}
 
   async UploadTestResults(file: Express.Multer.File, license: License) {
@@ -88,19 +88,10 @@ export class ResultsService {
     let results: TestResultWithoutPdf[];
     if (admin) {
       console.log("entered as admin")
-      results = await this.testResultRepository.findAll({
-        fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
-        orderBy: { testDate: 'DESC' }
-      });
+      results = await this.testResultRepository.FindAllForAdmin();
     } else if (user) {
       console.log("entered as user")
-      results = await this.testResultRepository.find(
-        { user: { pid: user.pid } },
-        {
-          fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
-          orderBy: { testDate: 'DESC' }
-        },
-      );
+      results = await this.testResultRepository.FindAllForUser(user.pid);
     } else {
       throw new BadRequestException(
         'User or Admin must be provided to get test results',
@@ -141,12 +132,7 @@ export class ResultsService {
   }
 
   async GetTestResultsForMachine(machineId: string) : Promise<TestResultMinimalDto[]>{
-    const results = await this.testResultRepository.find(
-      { machine: {fingerPrint: machineId} },
-      {
-        fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
-      },
-    );
+    const results = await this.testResultRepository.FindForMachine(machineId);
 
     const testResults = results.map((result) => {
       const dto = new TestResultMinimalDto();
