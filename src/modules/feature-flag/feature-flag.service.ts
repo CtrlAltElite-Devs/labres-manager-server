@@ -1,19 +1,16 @@
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/postgresql';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FeatureFlag } from 'src/entities/feature-flag.entity';
 import { AddFeatureFlagDto } from './dto/add-feature-flag.dto';
-import { EntityManager } from '@mikro-orm/core';
+import { FeatureFlagRepository } from 'src/repositories/feature-flag.repository';
+import { UnitOfWork } from '../common/unit-of-work';
 
 @Injectable()
 export class FeatureFlagService {
     private readonly logger = new Logger(FeatureFlagService.name);
 
     constructor(
-        @InjectRepository(FeatureFlag)
-        private readonly featureFlagRepository: EntityRepository<FeatureFlag>,
-
-        private readonly em: EntityManager
+        private readonly featureFlagRepository: FeatureFlagRepository,
+        private readonly unitOfWork: UnitOfWork
     ){}
 
     async getFeatures(){
@@ -32,7 +29,8 @@ export class FeatureFlagService {
         newFeature.featureName = featureName;
         newFeature.description = featureDescription;
         
-        await this.featureFlagRepository.insert(newFeature);
+        this.featureFlagRepository.create(newFeature);
+        await this.unitOfWork.Commit();
         return newFeature;
     }
 
@@ -46,7 +44,7 @@ export class FeatureFlagService {
         }
 
         feature.toggle();
-        await this.em.flush();
+        await this.unitOfWork.Commit();
         return feature;
     }
 

@@ -1,18 +1,16 @@
-import { EntityRepository } from "@mikro-orm/core";
-import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { RefreshToken } from "src/entities/security/refresh-token.entity";
 import { RequestMetadata } from "src/security/common/metadata-request";
 import { CustomJwtService } from "./custom-jwt-service";
 import { JwtHelper, JwtUserPayloadDto } from "src/utils/jwt-payload.dto";
+import { RefreshTokenRepository } from "src/repositories/refresh-token.repository";
 
 @Injectable()
 export class RefreshTokenService {
     private readonly logger = new Logger(RefreshTokenService.name);
 
     constructor(
-        @InjectRepository(RefreshToken)
-        private readonly refreshTokenRepository: EntityRepository<RefreshToken>,
+        private readonly refreshTokenRepository: RefreshTokenRepository,
         private readonly jwtService: CustomJwtService,
     ){}
 

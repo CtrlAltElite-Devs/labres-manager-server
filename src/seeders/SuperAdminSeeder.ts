@@ -14,6 +14,7 @@ export class SuperAdminSeeder extends Seeder {
         } else {
             await this.runProdSeeder(em);
         }
+        this.logger.log(`Finished running ${SuperAdminSeeder.name}`);
     }
 
     private async createMainSuperAdmin(em: EntityManager){

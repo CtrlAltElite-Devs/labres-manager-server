@@ -16,12 +16,17 @@ export class FeatureFlagSeeder extends Seeder {
 
         for(const feature of features){
             const exists = await em.findOne(FeatureFlag, {featureName: feature.featureName});
-            if(exists !== null) continue;
+            if(exists !== null) {
+                this.logger.log(`Feature ${feature.featureName} already added`);
+                continue;
+            };
             await em.upsert(FeatureFlag, feature, {
                 onConflictFields : ['featureName'],
                 onConflictAction: "ignore"
-            })
+            });
+            this.logger.log(`Feature ${feature.featureName} created`);
         }
+        this.logger.log(`Finished Running ${FeatureFlagSeeder.name}`);
     }
 }
 

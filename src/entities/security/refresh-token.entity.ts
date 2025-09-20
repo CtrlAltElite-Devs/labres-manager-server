@@ -1,10 +1,13 @@
-import { Entity, Opt, PrimaryKey, Property, Unique } from "@mikro-orm/core";
+import { Entity, EntityRepositoryType, Opt, PrimaryKey, Property, Unique } from "@mikro-orm/core";
+import { RefreshTokenRepository } from "src/repositories/refresh-token.repository";
 import { v4 } from "uuid";
 
 
-@Entity()
+@Entity({repository: () => RefreshTokenRepository})
 @Unique({ properties: ['userId', 'browserName', 'ipAddress', 'os'] })
 export class RefreshToken {
+    [EntityRepositoryType]? : RefreshTokenRepository
+
     @PrimaryKey({ type: "uuid" })
     id = v4();
 

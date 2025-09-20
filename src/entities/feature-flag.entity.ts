@@ -1,9 +1,12 @@
-import { Entity, ManyToOne, Opt, PrimaryKey, Property } from "@mikro-orm/core";
+import { Entity, EntityRepositoryType, ManyToOne, Opt, PrimaryKey, Property } from "@mikro-orm/core";
 import { v4 } from "uuid";
 import { Admin } from "./admin.entity";
+import { FeatureFlagRepository } from "src/repositories/feature-flag.repository";
 
-@Entity()
+@Entity({repository: () => FeatureFlagRepository})
 export class FeatureFlag {
+    [EntityRepositoryType]? : FeatureFlagRepository
+
     @PrimaryKey({columnType: "uuid"})
     id = v4();
 

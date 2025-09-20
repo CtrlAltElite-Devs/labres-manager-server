@@ -98,7 +98,7 @@ export class LicenseService {
 
         // add license
         const newLicense = License.Create(dto.licenseKey);
-        this.licenseRepository.Add(newLicense);
+        this.licenseRepository.create(newLicense);
         await this.unitOfWork.Commit();
 
         // return created license

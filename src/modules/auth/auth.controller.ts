@@ -99,13 +99,8 @@ export class AuthController {
 
   @Put('update-user')
   async updateUser(@Body() request: UpdatePasswordDto) {
+    // todo add security measures
     const response = await this.authService.UpdatePassword(request);
     return response;
-  }
-
-  @Get("metadata")
-  @UseInterceptors(MetaDataInterceptor)
-  metadata(@Req() req: EnrichedRequest){
-    return req.metaData;
   }
 }

@@ -1,5 +1,3 @@
-import { EntityRepository } from '@mikro-orm/core';
-import { InjectRepository } from '@mikro-orm/nestjs';
 import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { TestResult, TestResultWithoutPdf } from 'src/entities/test-result.entity';
 import { User } from 'src/entities/user.entity';
@@ -9,17 +7,17 @@ import { License } from 'src/entities/license.entity';
 import { AdminDto } from '../admin/dto/admin.dto';
 import { UserDto } from '../auth/dto/user.dto';
 import { TestResultRepository } from 'src/repositories/results.repository';
+import { UserRepository } from 'src/repositories/user.repository';
+import { UnitOfWork } from '../common/unit-of-work';
 
 @Injectable()
 export class ResultsService {
   private readonly logger = new Logger(ResultsService.name);
 
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: EntityRepository<User>,
-
-    @InjectRepository(TestResult)
+    private readonly userRepository: UserRepository,
     private readonly testResultRepository: TestResultRepository,
+    private readonly unitofWork: UnitOfWork
   ) {}
 
   async UploadTestResults(file: Express.Multer.File, license: License) {
@@ -65,7 +63,7 @@ export class ResultsService {
       this.logger.log(`No Existing user, will create user for pid:${pid}`);
       createdUser = new User();
       createdUser.pid = pid;
-      await this.userRepository.insert(createdUser);
+      this.userRepository.create(createdUser);
     } else {
       this.logger.log(`existing user found`);
     }
@@ -79,7 +77,9 @@ export class ResultsService {
     testResult.machine = license;
     testResult.binaryPdf = file.buffer;
 
-    await this.testResultRepository.insert(testResult);
+    this.testResultRepository.create(testResult);
+
+    await this.unitofWork.Commit();
 
     return CreateResultResponseDto.Map(testResult);
   }
