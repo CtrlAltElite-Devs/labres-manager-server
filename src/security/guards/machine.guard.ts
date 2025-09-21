@@ -6,6 +6,7 @@ import { LicenseService } from "src/modules/license/license.service";
 @Injectable()
 export class MachineGuard implements CanActivate {
     private readonly logger = new Logger(MachineGuard.name);
+
     constructor(
         private readonly licenseService: LicenseService
     ) {}
@@ -13,27 +14,29 @@ export class MachineGuard implements CanActivate {
     async canActivate(context: ExecutionContext) {
         const request = context.switchToHttp().getRequest<AuthenticatedMachineRequest>();
         const machineId = request.headers[MACHINE_ID] as string | undefined;
-        
-        if(!machineId){
-            this.logger.log("Machine Id not present");
+        const { method, url } = request;
+
+        if (!machineId) {
+            this.logger.warn(`[${method}] ${url} | Missing Machine ID`);
             throw new UnauthorizedException("Missing Machine Id");
-        } 
+        }
 
         const license = await this.licenseService.GetLicenseByFingerPrint(machineId);
 
-        if(license === null) {
-            this.logger.log("Missing License");
+        if (!license) {
+            this.logger.warn(`[${method}] ${url} | MachineId=${machineId} | License not found`);
             throw new UnauthorizedException("Missing License");
         }
 
-        if(license.isRevoked){
-            this.logger.log("License Revoked");
-            throw new UnauthorizedException("Your machine license was revoked, Please contact the company");
+        if (license.isRevoked) {
+            this.logger.error(`[${method}] ${url} | MachineId=${machineId} | License revoked`);
+            throw new UnauthorizedException(
+                "Your machine license was revoked, Please contact the company"
+            );
         }
 
-        this.logger.log("Verified License");
+        this.logger.log(`[${method}] ${url} | MachineId=${machineId} | License verified`);
         request.license = license;
         return true;
     }
-
 }

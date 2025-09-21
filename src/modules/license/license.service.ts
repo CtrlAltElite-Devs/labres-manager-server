@@ -58,7 +58,9 @@ export class LicenseService {
 
         // First-time activation
         license.fingerPrint = fingerPrint;
-        await this.unitOfWork.Commit();
+        await this.unitOfWork.Commit({
+            invalidateKey: fingerPrint
+        });
 
         return {
             success: true,
