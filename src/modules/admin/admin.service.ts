@@ -156,8 +156,4 @@ export class AdminService {
     async AdminLogOut(adminId: string){
         await this.refresthTokenService.RemoveRefreshToken(adminId);
     }
-
-    private async invokeCacheSideEffect(adminId: string){
-        await this.cacheManager.del(AdminCacheKey(adminId));
-    }
 }

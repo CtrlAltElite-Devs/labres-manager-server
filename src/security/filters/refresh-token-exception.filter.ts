@@ -18,7 +18,7 @@ export class RefreshTokenExceptionFilter implements ExceptionFilter<Unauthorized
     });
 
     // Log for debugging
-    this.logger.warn(`Failed to Refresh token removing cookies\n IsAdmin: ${request.admin !== undefined}`);
+    this.logger.warn(`Failed to Refresh token removing cookies; IsAdmin: ${request.admin !== undefined}`);
 
     // Return standardized JSON error
     response.status(exception.getStatus()).json({

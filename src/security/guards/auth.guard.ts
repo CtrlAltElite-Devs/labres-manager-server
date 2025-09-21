@@ -17,67 +17,93 @@ export class AuthGuard implements CanActivate {
   constructor(
     private readonly authService: AuthService,
     private readonly adminService: AdminService,
-    private readonly jwtService: CustomJwtService
+    private readonly jwtService: CustomJwtService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const { method, url } = request;
     const authorization = request.headers.authorization;
 
     let token: string | undefined;
 
+    this.logger.log(`Incoming request: [${method}] ${url}`);
+
     // 1. Try to get Bearer token
-    if (authorization?.startsWith("Bearer ")) {
-      token = authorization.split(" ")[1];
-      this.logger.log(`Bearer token provided: ${token}`);
+    if (authorization?.startsWith('Bearer ')) {
+      token = authorization.split(' ')[1];
+      this.logger.debug(`Bearer token provided: ${token.substring(0, 15)}...`);
     } else {
-      this.logger.log("No Bearer token provided in headers");
+      this.logger.debug('No Bearer token provided in headers');
     }
 
     // 2. If no Bearer token, try cookie
     if (!token) {
-      token = request.cookies["token"] as string;
+      token = request.cookies['token'] as string;
       if (token) {
-        this.logger.log(`Cookie token provided: ${token}`);
+        this.logger.debug(`Cookie token provided: ${token.substring(0, 15)}...`);
       } else {
-        this.logger.log("No token found in cookies");
+        this.logger.debug('No token found in cookies');
       }
     }
 
     // 3. If still no token, reject
     if (!token) {
-      this.logger.log("No token provided at all (neither Bearer nor cookie)");
-      throw new UnauthorizedException("Authentication token missing");
+      this.logger.warn(
+        `Unauthorized request to [${method}] ${url} - no token provided`,
+      );
+      throw new UnauthorizedException('Authentication token missing');
     }
 
     try {
       const decodedPayload = await this.jwtService.VerifyToken(token);
-      
+      this.logger.debug(
+        `Decoded token payload: ${JSON.stringify(decodedPayload)}`,
+      );
+
       if (decodedPayload.isAdmin) {
         // find admin
         const admin = await this.adminService.GetAdminByIdForGuard(
           decodedPayload.adminId!,
         );
 
-        if (admin === null) {
-          this.logger.log('Admin was not found');
+        if (!admin) {
+          this.logger.warn(
+            `Invalid admin token: adminId=${decodedPayload.adminId}`,
+          );
           throw new UnauthorizedException('Invalid token');
         }
+
+        this.logger.log(
+          `Authenticated admin (id=${admin.id}, email=${admin.email})`,
+        );
         request.admin = admin;
       } else {
         // find user
-        const user = await this.authService.GetUserByIdForGuard(decodedPayload.pid!);
+        const user = await this.authService.GetUserByIdForGuard(
+          decodedPayload.pid!,
+        );
 
-        if (user === null) {
-          this.logger.log('User was not found');
+        if (!user) {
+          this.logger.warn(
+            `Invalid user token: userId=${decodedPayload.pid}`,
+          );
           throw new UnauthorizedException('Invalid token');
         }
 
+        this.logger.log(
+          `Authenticated user (id=${user.pid})`,
+        );
         request.user = user;
       }
 
+      this.logger.log(`Access granted to [${method}] ${url}`);
       return true;
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `Authentication failed for [${method}] ${url}: ${err.message}`,
+      );
       throw new UnauthorizedException('Malformed or Expired Access Token');
     }
   }
