@@ -1,8 +1,11 @@
-import { Entity, Enum, Opt, PrimaryKey, Property, Unique } from "@mikro-orm/core";
+import { Entity, EntityRepositoryType, Enum, Opt, PrimaryKey, Property, Unique } from "@mikro-orm/core";
+import { AdminRepository } from "src/repositories/admin.repository";
 import { v4 } from "uuid";
 
-@Entity()
+@Entity({ repository: () => AdminRepository })
 export class Admin {
+    [EntityRepositoryType]? : AdminRepository
+
     @PrimaryKey({type: "uuid"})
     id = v4();
 

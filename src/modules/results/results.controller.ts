@@ -40,6 +40,8 @@ export class ResultsController {
 
   @Get()
   @UseAuthenticationGuard()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(2000)
   async getTestResults(@Req() request: AuthenticatedRequest) {
     const response = await this.resultService.GetTestResults(request.user, request.admin);
     return response;
@@ -48,7 +50,7 @@ export class ResultsController {
   @Get('/:id')
   @UseUserOnlyGuard()
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(5)
+  @CacheTTL(5000)
   async getTestResultById(
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,

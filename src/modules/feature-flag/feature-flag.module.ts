@@ -5,9 +5,10 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { FeatureFlag } from 'src/entities/feature-flag.entity';
 import { AuthModule } from '../auth/auth.module';
 import { AdminModule } from '../admin/admin.module';
+import { CommonModule } from '../common/common.module';
 
 @Module({
-  imports: [AuthModule, AdminModule, MikroOrmModule.forFeature([FeatureFlag])],
+  imports: [MikroOrmModule.forFeature([FeatureFlag]), CommonModule, AuthModule, AdminModule],
   controllers: [FeatureFlagController],
   providers: [FeatureFlagService],
   exports: [FeatureFlagService]

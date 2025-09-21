@@ -4,13 +4,13 @@ import { LicenseController } from './license.controller';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { License } from 'src/entities/license.entity';
 import { AuthModule } from '../auth/auth.module';
-import { AdminService } from '../admin/admin.service';
-import { Admin } from 'src/entities/admin.entity';
+import { CommonModule } from '../common/common.module';
+import { AdminModule } from '../admin/admin.module';
 
 @Module({
-  imports: [AuthModule, MikroOrmModule.forFeature([License, Admin])],
+  imports: [MikroOrmModule.forFeature([License]), CommonModule, AuthModule, AdminModule],
   controllers: [LicenseController],
-  providers: [LicenseService, AdminService],
+  providers: [LicenseService],
   exports: [LicenseService]
 })
 export class LicenseModule {}

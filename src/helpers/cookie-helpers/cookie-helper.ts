@@ -7,15 +7,22 @@ export type AuthenticationTokens = {
     refreshToken: string;
 }
 
+export type CookieAditionalOptions = {
+    isAdmin: boolean
+}
+
 export class CookieHelpers {
-    static SetTokens(response: Response, tokens: AuthenticationTokens) {
+    static SetTokens(response: Response, 
+        tokens: AuthenticationTokens, 
+        options: CookieAditionalOptions | undefined = undefined
+    ) {
         const { token, refreshToken } = tokens;
 
         response.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: IS_PROD_OR_STAGING,
             sameSite: getSameSiteStrategy(),
-            path: getRefreshPath(),
+            path: getRefreshPath(options?.isAdmin),
             domain: getDomainStrategy()
         });
 
@@ -27,10 +34,13 @@ export class CookieHelpers {
         });
     }
 
-    static RemoveTokens(response: Response) {
+    static RemoveTokens(
+        response: Response, 
+        options: CookieAditionalOptions | undefined = undefined
+    ) {
         try {
             response.clearCookie('refreshToken', {
-                path: getRefreshPath(),
+                path: getRefreshPath(options?.isAdmin),
                 secure: IS_PROD_OR_STAGING,
                 sameSite: getSameSiteStrategy(),
                 domain: getDomainStrategy()
@@ -48,8 +58,12 @@ export class CookieHelpers {
     }
 }
 
-function getRefreshPath() : string {
+//todo make this dili maguba puhon HAHAHA
+function getRefreshPath(isAdmin: boolean = false) : string {
     const VERSION : ApiVersion = "v1";
+    if(isAdmin){
+        return `/api/${VERSION}/auth/admin/refresh`;
+    }
     return `/api/${VERSION}/auth/refresh`
 }
 

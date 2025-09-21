@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { AuthModule } from './modules/auth/auth.module';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { AdminModule } from './modules/admin/admin.module';
@@ -10,6 +10,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { LicenseModule } from './modules/license/license.module';
 import { FeatureFlagModule } from './modules/feature-flag/feature-flag.module';
 import { JwtModule } from '@nestjs/jwt';
+import { RequestLoggerMiddleware } from './security/middlewares/request-logger-middleware';
 
 @Module({
   imports: [
@@ -25,4 +26,10 @@ import { JwtModule } from '@nestjs/jwt';
   ],
   controllers: [HealthController]
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestLoggerMiddleware)
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
+  }
+}

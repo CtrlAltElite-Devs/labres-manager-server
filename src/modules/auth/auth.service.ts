@@ -7,12 +7,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
-import { InjectRepository } from '@mikro-orm/nestjs';
 import { User } from 'src/entities/user.entity';
-import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import bcrypt from 'bcrypt';
-import { provideToken } from 'src/utils/jwt-utils';
-
 import { CheckPidResponseDto } from './dto/check-pid-response.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { JwtUserPayloadDto } from '../../utils/jwt-payload.dto';
@@ -26,6 +22,8 @@ import { CustomJwtService } from '../common/custom-jwt-service';
 import { RefreshTokenService } from '../common/refresh-token-service';
 import { RequestMetadata } from 'src/security/common/metadata-request';
 import { RefreshTokenResponseDto } from './dto/refresh-token/refresh-token-response.dto';
+import { UserRepository } from 'src/repositories/user.repository';
+import { UnitOfWork } from '../common/unit-of-work';
 
 
 @Injectable()
@@ -33,9 +31,8 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: EntityRepository<User>,
-    private readonly entityManager: EntityManager,
+    private readonly userRepository: UserRepository,
+    private readonly unitOfWork: UnitOfWork,
     @Inject(CACHE_MANAGER) 
     private cacheManager: Cache,
     private readonly jwtService: CustomJwtService,
@@ -61,7 +58,8 @@ export class AuthService {
       throw new ForbiddenException('Invalid Credentials');
     }
 
-    const token = provideToken(JwtUserPayloadDto.MapUser(existingUser));
+    const payload = JwtUserPayloadDto.MapUser(existingUser);
+    const { token } = await this.jwtService.CreateSignedTokens(payload);
 
     return {
       user: existingUser,
@@ -97,6 +95,7 @@ export class AuthService {
     return response;
   }
 
+  //todo common ni sya sa admin service maybe
   async Refresh(refreshToken: string, metaData: RequestMetadata) : Promise<RefreshTokenResponseDto>{
     const { userId, newToken, newRefreshToken } = await this.refreshTokenService.RemoveAndReturnNewTokens(refreshToken, metaData);
     await this.refreshTokenService.Store(userId!, newRefreshToken, metaData);
@@ -133,8 +132,9 @@ export class AuthService {
 
     user.password = await bcrypt.hash(password, 10);
 
-    await this.entityManager.flush();
-    await this.invokeCacheSideEffect(dto.pid);
+    await this.unitOfWork.Commit({
+      invalidateKey: dto.pid
+    })
 
     return user;
   }
@@ -159,9 +159,5 @@ export class AuthService {
     this.logger.log(`User cache miss: ${pid}`);
     await this.cacheManager.set(UserCacheKey(pid), userDto, 1000*10);
     return userDto
-  }
-
-  private async invokeCacheSideEffect(pid: string) {
-    await this.cacheManager.del(UserCacheKey(pid));
   }
 }

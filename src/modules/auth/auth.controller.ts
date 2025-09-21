@@ -10,10 +10,10 @@ import { RefreshTokenInterceptor } from 'src/security/interceptors/refresh-token
 import { EnrichedRefreshTokenRequest } from 'src/security/common/refresh-token-request';
 import { EnrichedRequest } from 'src/security/common/metadata-request';
 import { RefreshTokenDto } from './dto/refresh-token/refresh-token.dto';
-import { UseAuthenticationGuard } from 'src/security/decorators/index.decorators';
+import { UseAuthenticationGuard, UseUserOnlyGuard } from 'src/security/decorators/index.decorators';
 import { CookieHelpers } from 'src/helpers/cookie-helpers/cookie-helper';
 import { MetaDataInterceptor } from 'src/security/interceptors/metadata-interceptor';
-import { RefreshTokenExceptionFilter } from 'src/security/filters/refresth-token-exception.filter';
+import { RefreshTokenExceptionFilter } from 'src/security/filters/refresh-token-exception.filter';
 
 @Controller('auth')
 export class AuthController {
@@ -51,15 +51,15 @@ export class AuthController {
   @Post("log-out")
   @UseAuthenticationGuard()
   async logOut(@Req() request: AuthenticatedRequest, @Res({passthrough: true}) response : Response){
-    const { user, admin } = request;
-    const userId = user ? user.pid : admin?.id
-    await this.authService.LogOut(userId!)
+    const { user } = request;
+    const userId = user!.pid;
+    await this.authService.LogOut(userId)
     CookieHelpers.RemoveTokens(response);
     return { message: "Logged out Succesfully"}
   }
 
   @Get('me')
-  @UseAuthenticationGuard()
+  @UseUserOnlyGuard()
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(5)
   me(@Req() request: AuthenticatedRequest) {
@@ -99,13 +99,8 @@ export class AuthController {
 
   @Put('update-user')
   async updateUser(@Body() request: UpdatePasswordDto) {
+    // todo add security measures
     const response = await this.authService.UpdatePassword(request);
     return response;
-  }
-
-  @Get("metadata")
-  @UseInterceptors(MetaDataInterceptor)
-  metadata(@Req() req: EnrichedRequest){
-    return req.metaData;
   }
 }

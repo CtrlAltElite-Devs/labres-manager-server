@@ -1,25 +1,23 @@
-import { EntityRepository } from '@mikro-orm/core';
-import { InjectRepository } from '@mikro-orm/nestjs';
 import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { TestResult, TestResultWithoutPdf } from 'src/entities/test-result.entity';
 import { User } from 'src/entities/user.entity';
 import { CreateResultResponseDto } from './dto/create-result-response.dto';
-// import { Admin } from 'src/entities/admin.entity';
 import { TestResultDto, TestResultMinimalDto } from './dto/test-result-dto';
 import { License } from 'src/entities/license.entity';
 import { AdminDto } from '../admin/dto/admin.dto';
 import { UserDto } from '../auth/dto/user.dto';
+import { TestResultRepository } from 'src/repositories/results.repository';
+import { UserRepository } from 'src/repositories/user.repository';
+import { UnitOfWork } from '../common/unit-of-work';
 
 @Injectable()
 export class ResultsService {
   private readonly logger = new Logger(ResultsService.name);
 
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: EntityRepository<User>,
-
-    @InjectRepository(TestResult)
-    private readonly testResultRepository: EntityRepository<TestResult>,
+    private readonly userRepository: UserRepository,
+    private readonly testResultRepository: TestResultRepository,
+    private readonly unitofWork: UnitOfWork
   ) {}
 
   async UploadTestResults(file: Express.Multer.File, license: License) {
@@ -50,7 +48,7 @@ export class ResultsService {
     const testDate = new Date(testDateStr);
     if (isNaN(testDate.getTime())) {
       throw new BadRequestException(
-        `Invalid test date ${testDate.getTime()}, Exptected YYYY-MM-DD`,
+        `Invalid test date ${testDate.getTime()}, Expected YYYY-MM-DD`,
       );
     }
 
@@ -65,7 +63,7 @@ export class ResultsService {
       this.logger.log(`No Existing user, will create user for pid:${pid}`);
       createdUser = new User();
       createdUser.pid = pid;
-      await this.userRepository.insert(createdUser);
+      this.userRepository.create(createdUser);
     } else {
       this.logger.log(`existing user found`);
     }
@@ -79,7 +77,9 @@ export class ResultsService {
     testResult.machine = license;
     testResult.binaryPdf = file.buffer;
 
-    await this.testResultRepository.insert(testResult);
+    this.testResultRepository.create(testResult);
+
+    await this.unitofWork.Commit();
 
     return CreateResultResponseDto.Map(testResult);
   }
@@ -88,19 +88,10 @@ export class ResultsService {
     let results: TestResultWithoutPdf[];
     if (admin) {
       console.log("entered as admin")
-      results = await this.testResultRepository.findAll({
-        fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
-        orderBy: { testDate: 'DESC' }
-      });
+      results = await this.testResultRepository.FindAllForAdmin();
     } else if (user) {
       console.log("entered as user")
-      results = await this.testResultRepository.find(
-        { user: { pid: user.pid } },
-        {
-          fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
-          orderBy: { testDate: 'DESC' }
-        },
-      );
+      results = await this.testResultRepository.FindAllForUser(user.pid);
     } else {
       throw new BadRequestException(
         'User or Admin must be provided to get test results',
@@ -141,12 +132,7 @@ export class ResultsService {
   }
 
   async GetTestResultsForMachine(machineId: string) : Promise<TestResultMinimalDto[]>{
-    const results = await this.testResultRepository.find(
-      { machine: {fingerPrint: machineId} },
-      {
-        fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'], // applying projection
-      },
-    );
+    const results = await this.testResultRepository.FindForMachine(machineId);
 
     const testResults = results.map((result) => {
       const dto = new TestResultMinimalDto();

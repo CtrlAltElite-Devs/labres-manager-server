@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { 
+  CanActivate, 
+  ExecutionContext, 
+  Injectable, 
+  Logger, 
+  UnauthorizedException 
+} from '@nestjs/common';
 import { AuthenticatedRequest } from '../../security/common/application-requests';
 
 const USER_ONLY_ERROR_MESSAGE = 'This action is restricted to users only';
@@ -9,21 +15,42 @@ const USER_ONLY_ERROR_MESSAGE = 'This action is restricted to users only';
  */
 @Injectable()
 export class UserOnlyGuard implements CanActivate {
-    canActivate(context: ExecutionContext): boolean {
-        const request: AuthenticatedRequest = context.switchToHttp().getRequest();
-        
-        const { user, admin } = request;
+  private readonly logger = new Logger(UserOnlyGuard.name);
 
-        // Check if admin is trying to access user-only route
-        if (admin !== undefined) {
-            throw new UnauthorizedException(USER_ONLY_ERROR_MESSAGE);
-        }
+  canActivate(context: ExecutionContext): boolean {
+    const request: AuthenticatedRequest = context.switchToHttp().getRequest();
+    const { user, admin } = request;
+    const handler = context.getHandler().name;
+    const controller = context.getClass().name;
+    const { method, url } = request;
 
-        // Check if user is authenticated
-        if (!user) {
-            throw new UnauthorizedException(USER_ONLY_ERROR_MESSAGE);
-        }
+    // Log entry
+    this.logger.debug(
+      `Access attempt on ${method} ${url} (${controller} -> ${handler}) | ` +
+      `userId=${user?.pid ?? 'none'}, adminId=${admin?.id ?? 'none'}`
+    );
 
-        return true;
+    // Admin trying to access user-only route
+    if (admin !== undefined) {
+      this.logger.warn(
+        `❌ Denied: Admin ${admin.id} attempted to access user-only route ${method} ${url}`
+      );
+      throw new UnauthorizedException(USER_ONLY_ERROR_MESSAGE);
     }
+
+    // Unauthenticated request
+    if (!user) {
+      this.logger.warn(
+        `❌ Denied: Unauthenticated request attempted to access ${method} ${url}`
+      );
+      throw new UnauthorizedException(USER_ONLY_ERROR_MESSAGE);
+    }
+
+    // Success
+    this.logger.log(
+      `✅ Access granted to User ${user.pid} on ${method} ${url}`
+    );
+
+    return true;
+  }
 }

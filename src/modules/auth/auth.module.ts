@@ -3,16 +3,14 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { User } from 'src/entities/user.entity';
-import { AdminService } from '../admin/admin.service';
 import { Admin } from 'src/entities/admin.entity';
-import { CustomJwtService } from '../common/custom-jwt-service';
-import { RefreshTokenService } from '../common/refresh-token-service';
-import { RefreshToken } from 'src/entities/security/refresh-token.entity';
+import { CommonModule } from '../common/common.module';
+import { AdminModule } from '../admin/admin.module';
 
 @Module({
-  imports: [MikroOrmModule.forFeature([User, Admin, RefreshToken])],
+  imports: [MikroOrmModule.forFeature([User, Admin]), CommonModule, AdminModule],
   controllers: [AuthController],
-  providers: [AuthService, AdminService, CustomJwtService, RefreshTokenService],
-  exports: [AuthService, CustomJwtService]
+  providers: [AuthService],
+  exports: [AuthService]
 })
 export class AuthModule {}
