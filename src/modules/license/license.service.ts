@@ -59,7 +59,7 @@ export class LicenseService {
         // First-time activation
         license.fingerPrint = fingerPrint;
         await this.unitOfWork.Commit({
-            invalidateKey: fingerPrint
+            invalidateCacheKey: fingerPrint
         });
 
         return {
@@ -120,7 +120,7 @@ export class LicenseService {
 
         license.Revoke();
         await this.unitOfWork.Commit({
-            invalidateKey: license.fingerPrint
+            invalidateCacheKey: license.fingerPrint
         })
 
         return {
@@ -142,7 +142,7 @@ export class LicenseService {
 
         license.Reactivate();
         await this.unitOfWork.Commit({
-            invalidateKey: license.fingerPrint
+            invalidateCacheKey: license.fingerPrint
         })
 
         return {

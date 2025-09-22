@@ -30,36 +30,7 @@ export class AdminService {
         private cacheManager: Cache
     ) {}
 
-    async AdminLogin(dto: AdminLoginDto) {
-        const admin = await this.adminRepository.findOne({email: dto.email});
-
-        if(admin === null) throw new BadRequestException("Invalid Credentials");
-
-        const isMatch = await bcrypt.compare(
-            dto.password,
-            admin.password
-        )
-
-        if(!isMatch){
-            throw new BadRequestException("Invalid Credentials");
-        }
-
-        const payload = JwtUserPayloadDto.MapAdmin(admin);
-
-        const { token } = await this.jwtService.CreateSignedTokens(payload);
-
-        const responseDto = new AdminLoginResponseDto();
-        responseDto.admin = {
-            id: admin.email,
-            email: admin.email,
-            role: admin.role
-        };
-        responseDto.token = token;
-        
-        return responseDto;
-    }
-
-    async AdminLoginV2(dto: AdminLoginDto, metaData: RequestMetadata) : Promise<AdminLoginResponseDto>{
+    async AdminLogin(dto: AdminLoginDto, metaData: RequestMetadata) : Promise<AdminLoginResponseDto>{
         const admin = await this.adminRepository.findOne({email: dto.email});
 
         if(admin === null) throw new BadRequestException("Invalid Credentials");
@@ -84,8 +55,8 @@ export class AdminService {
 
     //todo common ni sya sa auth service maybe extract
     async Refresh(refreshToken:string, metaData: RequestMetadata) : Promise<RefreshTokenResponseDto>{
-        const { userId, newToken, newRefreshToken } = await this.refresthTokenService.RemoveAndReturnNewTokens(refreshToken, metaData);
-        await this.refresthTokenService.Store(userId!, newRefreshToken, metaData);
+        const { userId, token: newToken, refreshToken: newRefreshToken } = await this.refresthTokenService.RemoveAndReturnNewTokens(refreshToken, metaData);
+        await this.refresthTokenService.Store(userId, newRefreshToken, metaData);
 
         return {
             token: newToken,
@@ -149,7 +120,7 @@ export class AdminService {
         
         admin.password = await bcrypt.hash(password, 10);
         await this.unitOfWork.Commit({
-            invalidateKey: adminId
+            invalidateCacheKey: adminId
         })
     }
 

@@ -56,7 +56,7 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const decodedPayload = await this.jwtService.VerifyToken(token);
+      const decodedPayload = await this.jwtService.VerifyAndDecodeAccessToken(token);
       this.logger.debug(
         `Decoded token payload: ${JSON.stringify(decodedPayload)}`,
       );
