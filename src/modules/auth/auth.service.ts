@@ -97,8 +97,8 @@ export class AuthService {
 
   //todo common ni sya sa admin service maybe
   async Refresh(refreshToken: string, metaData: RequestMetadata) : Promise<RefreshTokenResponseDto>{
-    const { userId, newToken, newRefreshToken } = await this.refreshTokenService.RemoveAndReturnNewTokens(refreshToken, metaData);
-    await this.refreshTokenService.Store(userId!, newRefreshToken, metaData);
+    const { userId, token: newToken, refreshToken: newRefreshToken } = await this.refreshTokenService.RemoveAndReturnNewTokens(refreshToken, metaData);
+    await this.refreshTokenService.Store(userId, newRefreshToken, metaData);
     
     return {
       token: newToken,
@@ -133,7 +133,7 @@ export class AuthService {
     user.password = await bcrypt.hash(password, 10);
 
     await this.unitOfWork.Commit({
-      invalidateKey: dto.pid
+      invalidateCacheKey: dto.pid
     })
 
     return user;

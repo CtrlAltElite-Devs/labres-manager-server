@@ -4,7 +4,7 @@ import { Cache } from 'cache-manager';
 import { Inject, Injectable, Logger } from "@nestjs/common";
 
 export type CommitOptions = {
-    invalidateKey?: string | string[];
+    invalidateCacheKey?: string | string[];
 }
 
 @Injectable()
@@ -37,8 +37,8 @@ export class UnitOfWork {
             return;
         }
         
-        if(options.invalidateKey){
-            await this.invalidateCache(options.invalidateKey)
+        if(options.invalidateCacheKey){
+            await this.invalidateCache(options.invalidateCacheKey)
         }
     }
 

@@ -1,9 +1,14 @@
 import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { RefreshToken } from "src/entities/security/refresh-token.entity";
 import { RequestMetadata } from "src/security/common/metadata-request";
-import { CustomJwtService } from "./custom-jwt-service";
+import { CustomJwtService, SignedAuthenticationPayload } from "./custom-jwt-service";
 import { JwtHelper, JwtUserPayloadDto } from "src/utils/jwt-payload.dto";
 import { RefreshTokenRepository } from "src/repositories/refresh-token.repository";
+
+
+export type SignedAuthenticationPayloadWithId = {
+  userId: string
+} & SignedAuthenticationPayload;
 
 @Injectable()
 export class RefreshTokenService {
@@ -15,36 +20,22 @@ export class RefreshTokenService {
   ) {}
 
   async Store(userId: string, refreshToken: string, metaData: RequestMetadata) {
-    const tokenHashed = refreshToken; // ⚠️ in prod, hash before storing
-
-    const newToken = new RefreshToken();
-    newToken.userId = userId;
-    newToken.browserName = metaData.browserName;
-    newToken.os = metaData.os;
-    newToken.ipAddress = metaData.ipAddress;
-    newToken.tokenHashed = tokenHashed;
-    newToken.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    const inserted = await this.refreshTokenRepository.upsert(newToken, {
-      onConflictFields: ["userId", "browserName", "ipAddress", "os"],
-      onConflictAction: "merge",
-      onConflictExcludeFields: ["id", "createdAt"],
-    });
-
+    const newToken = RefreshToken.Create(userId, metaData, refreshToken);
+    const createdToken = await this.refreshTokenRepository.CreateOrUpdate(newToken);
     this.logger.log(
       `Stored refresh token for user ${userId} (ip=${metaData.ipAddress}, browser=${metaData.browserName}, os=${metaData.os})`,
     );
 
-    return inserted;
+    return createdToken;
   }
 
   async RemoveAndReturnNewTokens(
     refreshToken: string,
     metaData: RequestMetadata,
-  ) {
+  ) : Promise<SignedAuthenticationPayloadWithId> {
     let decoded: JwtUserPayloadDto;
     try {
-      decoded = await this.jwtService.DecodeAndVerifyRefreshToken(refreshToken);
+      decoded = await this.jwtService.VerifyAndDecodeRefreshToken(refreshToken);
       this.logger.log(
         `Decoded refresh token for user=${decoded.isAdmin ? decoded.adminId : decoded.pid}, isAdmin=${decoded.isAdmin}`,
       );
@@ -54,12 +45,14 @@ export class RefreshTokenService {
     }
 
     const userId = decoded.isAdmin ? decoded.adminId : decoded.pid;
-    const tokenRecord = await this.refreshTokenRepository.findOne({
-      userId,
-      ipAddress: metaData.ipAddress,
-      browserName: metaData.browserName,
-      os: metaData.os,
-    });
+    if(userId === undefined){
+      this.logger.warn(
+        `Malformed Refresh Token`,
+      );
+      throw new UnauthorizedException();
+    }
+
+    const tokenRecord = await this.refreshTokenRepository.FindUsingMetadata(userId, metaData)
 
     if (!tokenRecord) {
       this.logger.warn(
@@ -79,7 +72,7 @@ export class RefreshTokenService {
     }
 
     // 3. Expiry check
-    if (tokenRecord.expiresAt.getTime() <= Date.now()) {
+    if (tokenRecord.IsExpired()) {
       this.logger.warn(`Expired refresh token for user ${userId}`);
       await this.refreshTokenRepository.nativeDelete(tokenRecord);
       throw new UnauthorizedException();
@@ -100,8 +93,8 @@ export class RefreshTokenService {
 
     return {
       userId,
-      newToken,
-      newRefreshToken,
+      token: newToken,
+      refreshToken: newRefreshToken,
     };
   }
 

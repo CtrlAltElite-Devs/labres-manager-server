@@ -27,13 +27,13 @@ export class CustomJwtService {
         }
     }
 
-    async VerifyToken(token: string) {
+    async VerifyAndDecodeAccessToken(token: string) {
         return await this.jwtService.verifyAsync<JwtUserPayloadDto>(token, {
             secret: this.config.get<string>('JWT_SECRET')
         });
     }
     
-    async DecodeAndVerifyRefreshToken(refreshToken: string){
+    async VerifyAndDecodeRefreshToken(refreshToken: string){
         return await this.jwtService.verifyAsync<JwtUserPayloadDto>(refreshToken, {
             secret: this.config.get<string>("JWT_REFRESH_SECRET")
         })
