@@ -1,21 +1,44 @@
-import { EntityRepository } from "@mikro-orm/core";
+import { EntityRepository, Field } from "@mikro-orm/postgresql";
 import { TestResult, TestResultWithoutPdf } from "src/entities/test-result.entity";
+import { ResultQueryResourceParameters } from "src/modules/results/query-parameters/result-query-parameters";
 
 export class TestResultRepository extends EntityRepository<TestResult>{
-    async FindAllForAdmin() : Promise<TestResultWithoutPdf[]>{
-        return await this.findAll({
-            fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'],
-            orderBy: { testDate: 'DESC' }
-        });
+    private GetBasicFields(){
+        const fields : Field<TestResult>[] = ["id", "user", "testName", "size", "testDate", "machine"]
+        return fields;
+    }
+    
+    async FindAllForAdmin(params: ResultQueryResourceParameters) : Promise<TestResultWithoutPdf[]>{
+        const resultsQuery = this.createQueryBuilder()
+            .select(this.GetBasicFields())
+            .orderBy({testDate: "DESC"})
+
+        if(params.testName){
+            resultsQuery.andWhere({testName: { $ilike: `%${params.testName}%`}})
+        }
+
+        if(params.testDate){
+            resultsQuery.andWhere({testDate: params.testDate})
+        }
+        
+        return await resultsQuery.getResult();
     }
 
-    async FindAllForUser(pid: string) : Promise<TestResultWithoutPdf[]>{
-        return await this.find({ user: { pid } },
-            {
-                fields: ['id', 'user', 'testName', 'size', 'testDate', 'machine'],
-                orderBy: { testDate: 'DESC' }
-            },
-      );
+    async FindAllForUser(params: ResultQueryResourceParameters, pid: string) : Promise<TestResultWithoutPdf[]>{
+        const resultsQuery = this.createQueryBuilder()
+            .select(this.GetBasicFields())
+            .where({ user: { pid } })
+            .orderBy({testDate: "DESC"})
+
+        if(params.testName){
+            resultsQuery.andWhere({testName: { $ilike: `%${params.testName}%`}})
+        }
+
+        if(params.testDate){
+            resultsQuery.andWhere({testDate: params.testDate})
+        }
+
+        return await resultsQuery.getResult();
     }
 
     async FindForMachine(machineId: string){

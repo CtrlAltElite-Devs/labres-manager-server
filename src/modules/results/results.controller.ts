@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Query, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { CreateResultDto } from './dto/create-result.dto';
@@ -8,6 +8,7 @@ import { AuthenticatedMachineRequest } from 'src/security/common/machine-request
 import { AuthenticatedRequest } from 'src/security/common/application-requests';
 import { UseAuthenticationGuard, UseMachineGuard, UseUserOnlyGuard } from 'src/security/decorators/index.decorators';
 import { UseFeatureFlag } from 'src/security/decorators/feature-flag.decorator';
+import { ResultQueryResourceParameters } from './query-parameters/result-query-parameters';
 
 @Controller('test-result')
 export class ResultsController {
@@ -42,8 +43,11 @@ export class ResultsController {
   @UseAuthenticationGuard()
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(2000)
-  async getTestResults(@Req() request: AuthenticatedRequest) {
-    const response = await this.resultService.GetTestResults(request.user, request.admin);
+  async getTestResults(
+    @Req() request: AuthenticatedRequest,
+    @Query() params: ResultQueryResourceParameters
+  ) {
+    const response = await this.resultService.GetTestResults(params, request.user, request.admin);
     return response;
   }
 
