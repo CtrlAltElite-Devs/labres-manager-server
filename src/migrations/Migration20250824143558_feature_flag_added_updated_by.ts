@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20250824143558_feature_flag_added_updated_by extends Migration {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20250827161044_Added_Admin_RefreshTokens extends Migration {
