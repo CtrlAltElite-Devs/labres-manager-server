@@ -4,6 +4,7 @@ import { Migrator } from "@mikro-orm/migrations";
 import { SeedManager } from "@mikro-orm/seeder";
 import { entities } from './src/entities/index.entity';
 import { IS_DEV_OR_STAGING } from "src/utils/environment";
+import { MikroORMLogger } from "src/security/loggers/mikro-orm-logger";
 
 const getConnectionStrategy = () => {
   const isNeon = process.env.DATABASE_URL?.includes('neon.tech');
@@ -37,5 +38,6 @@ export default defineConfig({
   seeder: {
     path: "dist/src/seeders",
     pathTs: "src/seeders"
-  }
+  },
+  loggerFactory: (options) => new MikroORMLogger(options)
 });

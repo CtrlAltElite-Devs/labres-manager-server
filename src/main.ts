@@ -7,6 +7,7 @@ import UseSwagger from './configurations/swagger-configuration';
 import InitializeDatabase from "./configurations/database-initializiation";
 import { IS_DEV_OR_STAGING } from "./utils/environment";
 import usePostBootstrap from "./configurations/post-bootstrap";
+import { ApplyLensConfigurations } from './configurations/lens-configuration';
 
 async function bootstrap() { 
   const app = await NestFactory.create(AppModule);
@@ -22,6 +23,9 @@ async function bootstrap() {
   ApplyApiVersioning(app);
   
   app.enableShutdownHooks();
+
+  await ApplyLensConfigurations(app);
+
   await app.listen(process.env.PORT ?? 5001);
 }
 

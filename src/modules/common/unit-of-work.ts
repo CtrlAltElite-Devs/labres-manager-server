@@ -1,7 +1,6 @@
 import { EntityManager } from "@mikro-orm/postgresql";
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { Cache } from 'cache-manager';
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
+import { CacheService } from "./cache-service";
 
 export type CommitOptions = {
     invalidateCacheKey?: string | string[];
@@ -13,8 +12,7 @@ export class UnitOfWork {
 
     constructor(
         private readonly em: EntityManager,
-        @Inject(CACHE_MANAGER) 
-        private cacheManager: Cache
+        private cacheService: CacheService
     ) {}
 
     async Commit(
@@ -47,7 +45,7 @@ export class UnitOfWork {
         const list = Array.isArray(keys) ? keys : [keys];
         for (const key of list) {
             this.logger.log(`Invalidating cache key: ${key}`);
-            await this.cacheManager.del(key);
+            await this.cacheService.del(key);
         }
     }
 }

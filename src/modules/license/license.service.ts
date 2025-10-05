@@ -1,14 +1,13 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { License } from 'src/entities/license.entity';
 import { VerifyLicenseDto } from './dto/verify-license.dto';
 import { VerifyLicenseResponseDto } from './dto/verify-license-response.dto';
 import { EntityManager } from '@mikro-orm/postgresql';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { CreateLicenseDto } from './dto/create-license.dto';
 import { RevokeLicenseResponseDto as StatusLicenseResponseDto } from './dto/revoke-license-response.dto';
 import LicenseRepository from 'src/repositories/license.repository';
 import { UnitOfWork } from '../common/unit-of-work';
+import { CacheService } from '../common/cache-service';
 
 @Injectable()
 export class LicenseService {
@@ -21,8 +20,7 @@ export class LicenseService {
 
         private readonly unitOfWork: UnitOfWork,
 
-        @Inject(CACHE_MANAGER) 
-        private cacheManager: Cache
+        private readonly cacheService: CacheService
     ){}
 
     async Verify(dto: VerifyLicenseDto): Promise<VerifyLicenseResponseDto> {
@@ -69,7 +67,7 @@ export class LicenseService {
     }
 
     async GetLicenseByFingerPrint(fingerPrint: string){
-        const cachedLicense = await this.cacheManager.get<License>(fingerPrint);
+        const cachedLicense = await this.cacheService.get<License>(fingerPrint);
 
         if(cachedLicense){
             this.logger.log("Found machine cache");
@@ -82,7 +80,7 @@ export class LicenseService {
 
         this.logger.log("Setting machine cache");
         if(license !== null){
-            await this.cacheManager.set(fingerPrint, license, 1000*10);
+            await this.cacheService.set(fingerPrint, license, 1000*10);
         }
         return license;
     }
