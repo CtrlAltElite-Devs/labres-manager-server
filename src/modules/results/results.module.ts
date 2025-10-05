@@ -9,6 +9,7 @@ import { AuthModule } from '../auth/auth.module';
 import { FeatureFlagModule } from '../feature-flag/feature-flag.module';
 import { CommonModule } from '../common/common.module';
 import { LicenseModule } from '../license/license.module';
+import { ResultHelper } from './result.helper';
 
 @Module({
 imports: [
@@ -19,6 +20,6 @@ imports: [
     LicenseModule,
     FeatureFlagModule],
   controllers: [ResultsController],
-  providers: [ResultsService],
+  providers: [ResultsService, ResultHelper],
 })
 export class ResultsModule {}

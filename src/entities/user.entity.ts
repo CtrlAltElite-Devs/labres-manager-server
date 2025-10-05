@@ -16,4 +16,10 @@ export class User {
 
     @Property()
     createdAt: Date & Opt = new Date()
+
+    static Create(pid: string) : User {
+        const newUser = new User();
+        newUser.pid = pid;
+        return newUser;
+    }
 }
