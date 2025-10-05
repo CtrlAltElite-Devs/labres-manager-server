@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20250726143633 extends Migration {

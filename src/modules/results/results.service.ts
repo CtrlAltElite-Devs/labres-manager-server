@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TestResult, TestResultWithoutPdf } from 'src/entities/test-result.entity';
 import { User } from 'src/entities/user.entity';
 import { CreateResultResponseDto } from './dto/create-result-response.dto';
@@ -9,6 +9,7 @@ import { UserDto } from '../auth/dto/user.dto';
 import { TestResultRepository } from 'src/repositories/results.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { UnitOfWork } from '../common/unit-of-work';
+import { ResultQueryResourceParameters } from './query-parameters/result-query-parameters';
 
 @Injectable()
 export class ResultsService {
@@ -84,14 +85,14 @@ export class ResultsService {
     return CreateResultResponseDto.Map(testResult);
   }
 
-  async GetTestResults(user?: UserDto, admin?: AdminDto) {
+  async GetTestResults(params: ResultQueryResourceParameters, user?: UserDto, admin?: AdminDto) {
     let results: TestResultWithoutPdf[];
     if (admin) {
       console.log("entered as admin")
-      results = await this.testResultRepository.FindAllForAdmin();
+      results = await this.testResultRepository.FindAllForAdmin(params);
     } else if (user) {
       console.log("entered as user")
-      results = await this.testResultRepository.FindAllForUser(user.pid);
+      results = await this.testResultRepository.FindAllForUser(params, user.pid);
     } else {
       throw new BadRequestException(
         'User or Admin must be provided to get test results',
@@ -112,14 +113,10 @@ export class ResultsService {
   }
 
   async GetTestResultById(id: string, pid: string){
-    const testResult = await this.testResultRepository.findOne({id: id})
+    const testResult = await this.testResultRepository.findOne({id: id, user : {pid: pid}})    
 
     if(testResult === null){
       throw new NotFoundException("Result not found");
-    }
-
-    if(testResult.user.pid !== pid){
-      throw new UnauthorizedException("User does not own the result");
     }
 
     const base64pdf = testResult.binaryPdf.toString("base64");
