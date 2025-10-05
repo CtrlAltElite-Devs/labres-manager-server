@@ -10,6 +10,7 @@ import { TestResultRepository } from 'src/repositories/results.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { UnitOfWork } from '../common/unit-of-work';
 import { ResultQueryResourceParameters } from './query-parameters/result-query-parameters';
+import { ResultHelper } from './result.helper';
 
 @Injectable()
 export class ResultsService {
@@ -18,42 +19,12 @@ export class ResultsService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly testResultRepository: TestResultRepository,
-    private readonly unitofWork: UnitOfWork
+    private readonly unitofWork: UnitOfWork,
+    private readonly resultHelper: ResultHelper
   ) {}
 
   async UploadTestResults(file: Express.Multer.File, license: License) {
-    const fileType = file.mimetype;
-
-    if (fileType !== 'application/pdf') {
-      throw new BadRequestException('File type must be application/pdf');
-    }
-
-    const size = file.size;
-    const fileName = file.originalname;
-
-    const parts: string[] = fileName.split('_');
-
-    if (parts.length < 3) {
-      throw new BadRequestException(
-        'Invalid File format. Expected format: PID_nameOfTest_testDate.pdf',
-      );
-    }
-
-    const pid = parts[0]; // "12345"
-    let testDateStr = parts[parts.length - 1]; // "2024-03-30"
-    if (testDateStr.endsWith('.pdf')) {
-      testDateStr = testDateStr.replace('.pdf', '');
-    }
-    
-    // Convert testDateStr to a Date object
-    const testDate = new Date(testDateStr);
-    if (isNaN(testDate.getTime())) {
-      throw new BadRequestException(
-        `Invalid test date ${testDate.getTime()}, Expected YYYY-MM-DD`,
-      );
-    }
-
-    const testName = parts.slice(1, -1).join(' '); // "BloodTest" or multi-word test names
+    const {pid, testName, testDate, size} = this.resultHelper.ValidateTestResult(file);
 
     // check if pid exists
     const existingUser = await this.userRepository.findOne({ pid: pid });
@@ -62,13 +33,11 @@ export class ResultsService {
     let createdUser: User | null = null;
     if (existingUser === null) {
       this.logger.log(`No Existing user, will create user for pid:${pid}`);
-      createdUser = new User();
-      createdUser.pid = pid;
+      createdUser = User.Create(pid)
       this.userRepository.create(createdUser);
     } else {
       this.logger.log(`existing user found`);
     }
-
 
     const testResult = new TestResult();
     testResult.user = createdUser ? createdUser : existingUser!;
@@ -121,7 +90,7 @@ export class ResultsService {
 
     const base64pdf = testResult.binaryPdf.toString("base64");
 
-    const dto = new TestResultDto();
+  const dto = new TestResultDto();
     dto.id = id;
     dto.base64Pdf = base64pdf;
 
