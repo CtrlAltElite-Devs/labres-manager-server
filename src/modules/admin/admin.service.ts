@@ -1,11 +1,10 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AdminLoginResponseDto } from 'src/modules/admin/dto/admin-login-response.dto';
 import { AdminLoginDto } from 'src/modules/admin/dto/admin-login.dto';
 import { JwtUserPayloadDto } from 'src/utils/jwt-payload.dto';
 import { Admin, AdminRole } from 'src/entities/admin.entity';
 import bcrypt from 'bcrypt';
 import { AdminRegisterDto } from 'src/modules/admin/dto/admin-register.dto';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { AdminDto } from './dto/admin.dto';
 import { AdminCacheKey } from 'src/helpers/cache-helpers/admin.cache';
@@ -16,6 +15,7 @@ import { CustomJwtService } from '../common/custom-jwt-service';
 import { RefreshTokenService } from '../common/refresh-token-service';
 import { RefreshTokenResponseDto } from '../auth/dto/refresh-token/refresh-token-response.dto';
 import { UnitOfWork } from '../common/unit-of-work';
+import { CacheService } from '../common/cache-service';
 
 @Injectable()
 export class AdminService {
@@ -26,8 +26,7 @@ export class AdminService {
         private readonly unitOfWork: UnitOfWork,
         private readonly jwtService: CustomJwtService,
         private readonly refresthTokenService: RefreshTokenService,
-        @Inject(CACHE_MANAGER) 
-        private cacheManager: Cache
+        private readonly cacheService: CacheService
     ) {}
 
     async AdminLogin(dto: AdminLoginDto, metaData: RequestMetadata) : Promise<AdminLoginResponseDto>{
@@ -86,7 +85,7 @@ export class AdminService {
     }
 
     async GetAdminByIdForGuard(adminId: string) : Promise<AdminDto | null>{
-        const adminDtoCache = await this.cacheManager.get<AdminDto>(AdminCacheKey(adminId));
+        const adminDtoCache = await this.cacheService.get<AdminDto>(AdminCacheKey(adminId));
         if(adminDtoCache){
             this.logger.log(`Admin Cache Hit: ${adminId}`)
             return adminDtoCache;
@@ -99,7 +98,7 @@ export class AdminService {
             fields: ["id", "email", "role"]
         });
 
-        await this.cacheManager.set(AdminCacheKey(adminId), adminDto, 1000*15);
+        await this.cacheService.set(AdminCacheKey(adminId), adminDto, 1000*15);
         return adminDto;
     }
 

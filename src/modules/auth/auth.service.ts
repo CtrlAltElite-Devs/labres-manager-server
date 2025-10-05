@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ForbiddenException,
-  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -12,8 +11,6 @@ import bcrypt from 'bcrypt';
 import { CheckPidResponseDto } from './dto/check-pid-response.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { JwtUserPayloadDto } from '../../utils/jwt-payload.dto';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { UserDto } from './dto/user.dto';
 import { UserCacheKey } from 'src/helpers/cache-helpers/user.cache';
 import { LoginResponseV2Dto } from './dto/login/login-response-v2.dto';
@@ -24,6 +21,7 @@ import { RequestMetadata } from 'src/security/common/metadata-request';
 import { RefreshTokenResponseDto } from './dto/refresh-token/refresh-token-response.dto';
 import { UserRepository } from 'src/repositories/user.repository';
 import { UnitOfWork } from '../common/unit-of-work';
+import { CacheService } from '../common/cache-service';
 
 
 @Injectable()
@@ -33,8 +31,7 @@ export class AuthService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly unitOfWork: UnitOfWork,
-    @Inject(CACHE_MANAGER) 
-    private cacheManager: Cache,
+    private readonly cacheService: CacheService,
     private readonly jwtService: CustomJwtService,
     private readonly refreshTokenService: RefreshTokenService
   ) {}
@@ -148,7 +145,7 @@ export class AuthService {
   }
 
   async GetUserByIdForGuard(pid: string){
-    const userDtoCache = await this.cacheManager.get<UserDto>(UserCacheKey(pid));
+    const userDtoCache = await this.cacheService.get<UserDto>(UserCacheKey(pid));
     if(userDtoCache){
       this.logger.log(`User cache hit: ${pid}`)
       return userDtoCache;
@@ -157,7 +154,7 @@ export class AuthService {
       fields: ["pid"]
     })
     this.logger.log(`User cache miss: ${pid}`);
-    await this.cacheManager.set(UserCacheKey(pid), userDto, 1000*10);
+    await this.cacheService.set(UserCacheKey(pid), userDto, 1000*10);
     return userDto
   }
 }
