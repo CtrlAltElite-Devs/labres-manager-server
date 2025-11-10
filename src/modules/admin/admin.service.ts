@@ -5,7 +5,6 @@ import { JwtUserPayloadDto } from 'src/utils/jwt-payload.dto';
 import { Admin, AdminRole } from 'src/entities/admin.entity';
 import bcrypt from 'bcrypt';
 import { AdminRegisterDto } from 'src/modules/admin/dto/admin-register.dto';
-import { Cache } from 'cache-manager';
 import { AdminDto } from './dto/admin.dto';
 import { AdminCacheKey } from 'src/helpers/cache-helpers/admin.cache';
 import { AdminUpdatePasswordDto } from './dto/admin-update-password.dto';
@@ -27,19 +26,19 @@ export class AdminService {
         private readonly jwtService: CustomJwtService,
         private readonly refresthTokenService: RefreshTokenService,
         private readonly cacheService: CacheService
-    ) {}
+    ) { }
 
-    async AdminLogin(dto: AdminLoginDto, metaData: RequestMetadata) : Promise<AdminLoginResponseDto>{
-        const admin = await this.adminRepository.findOne({email: dto.email});
+    async AdminLogin(dto: AdminLoginDto, metaData: RequestMetadata): Promise<AdminLoginResponseDto> {
+        const admin = await this.adminRepository.findOne({ email: dto.email });
 
-        if(admin === null) throw new BadRequestException("Invalid Credentials");
+        if (admin === null) throw new BadRequestException("Invalid Credentials");
 
         const isMatch = await bcrypt.compare(
             dto.password,
             admin.password
         )
 
-        if(!isMatch){
+        if (!isMatch) {
             throw new BadRequestException("Invalid Credentials");
         }
 
@@ -53,7 +52,7 @@ export class AdminService {
     }
 
     //todo common ni sya sa auth service maybe extract
-    async Refresh(refreshToken:string, metaData: RequestMetadata) : Promise<RefreshTokenResponseDto>{
+    async Refresh(refreshToken: string, metaData: RequestMetadata): Promise<RefreshTokenResponseDto> {
         const { userId, token: newToken, refreshToken: newRefreshToken } = await this.refresthTokenService.RemoveAndReturnNewTokens(refreshToken, metaData);
         await this.refresthTokenService.Store(userId, newRefreshToken, metaData);
 
@@ -65,11 +64,11 @@ export class AdminService {
     }
 
     async AdminRegister(dto: AdminRegisterDto) {
-        const {email, password } = dto;
+        const { email, password } = dto;
 
-        const existing = await this.adminRepository.findOne({email: email});
+        const existing = await this.adminRepository.findOne({ email: email });
 
-        if(existing !== null) throw new BadRequestException("admin email already exists");
+        if (existing !== null) throw new BadRequestException("admin email already exists");
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -84,9 +83,9 @@ export class AdminService {
         return newAdmin;
     }
 
-    async GetAdminByIdForGuard(adminId: string) : Promise<AdminDto | null>{
+    async GetAdminByIdForGuard(adminId: string): Promise<AdminDto | null> {
         const adminDtoCache = await this.cacheService.get<AdminDto>(AdminCacheKey(adminId));
-        if(adminDtoCache){
+        if (adminDtoCache) {
             this.logger.log(`Admin Cache Hit: ${adminId}`)
             return adminDtoCache;
         }
@@ -98,15 +97,15 @@ export class AdminService {
             fields: ["id", "email", "role"]
         });
 
-        await this.cacheService.set(AdminCacheKey(adminId), adminDto, 1000*15);
+        await this.cacheService.set(AdminCacheKey(adminId), adminDto, 1000 * 15);
         return adminDto;
     }
 
-    async UpdateAdminPassword(adminId: string, dto: AdminUpdatePasswordDto){
-        const {oldPassword, newPassword: password} = dto;
-        const admin = await this.adminRepository.findOne({id: adminId});
-        
-        if(admin === null) 
+    async UpdateAdminPassword(adminId: string, dto: AdminUpdatePasswordDto) {
+        const { oldPassword, newPassword: password } = dto;
+        const admin = await this.adminRepository.findOne({ id: adminId });
+
+        if (admin === null)
             throw new NotFoundException();
 
         const oldPasswordMatches = await bcrypt.compare(
@@ -114,16 +113,16 @@ export class AdminService {
             admin.password
         )
 
-        if(!oldPasswordMatches) 
+        if (!oldPasswordMatches)
             throw new BadRequestException();
-        
+
         admin.password = await bcrypt.hash(password, 10);
         await this.unitOfWork.Commit({
             invalidateCacheKey: adminId
         })
     }
 
-    async AdminLogOut(adminId: string){
+    async AdminLogOut(adminId: string) {
         await this.refresthTokenService.RemoveRefreshToken(adminId);
     }
 }
