@@ -1,6 +1,6 @@
 services:
   api:
-    container_name: 
+    container_name: labres-api-staging
     image: ghcr.io/ctrlaltelite-devs/labres-manager-server:staging
     ports:
       - "5031:5031"
