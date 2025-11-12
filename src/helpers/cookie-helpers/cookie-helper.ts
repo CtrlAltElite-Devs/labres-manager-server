@@ -68,7 +68,7 @@ function getRefreshPath(isAdmin: boolean = false) : string {
 }
 
 function getDomainStrategy() : string | undefined{
-    return IS_STRICTLY_DEV ? undefined : ".ctr3.org";
+    return IS_STRICTLY_DEV ? undefined : ".queuemcwd.ph";
 }
 
 function getSameSiteStrategy() : boolean | "lax" | "none" | "strict" | undefined {
