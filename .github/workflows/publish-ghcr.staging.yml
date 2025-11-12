@@ -45,3 +45,43 @@ jobs:
               run: |
                   docker push $REGISTRY/$ORG/$IMAGE:${TAG}
                   docker push $REGISTRY/$ORG/$IMAGE:${GITHUB_SHA}
+
+            # 6️⃣ Deploy to VPS via SSH
+            - name: Deploy to Staging VPS
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.VPS_HOST }}
+                  username: ${{ secrets.VPS_USERNAME }}
+                  key: ${{ secrets.VPS_SSH_KEY }}
+                  script: |
+                      DEPLOY_DIR=~/deployments/labres
+                      mkdir -p "$DEPLOY_DIR"
+                      cd "$DEPLOY_DIR"
+
+                      if [ ! -d labres-manager-server ]; then
+                          git clone --branch staging git@github.com:CtrlAltElite-Devs/labres-manager-server.git
+                      else
+                          cd labres-manager-server
+                          git fetch origin
+                          git checkout staging
+                          git pull origin staging
+                          cd ..
+                      fi
+
+                      cd labres-manager-server
+
+                      SHA_TAG=$(git rev-parse HEAD)
+
+                      # Log in to GHCR on VPS
+                      echo "${{ secrets.GH_PAT }}" | docker login ghcr.io -u "${{ secrets.GH_USERNAME }}" --password-stdin
+
+                      # Pull latest staging image
+                      docker pull ghcr.io/ctrlaltelite-devs/labres-manager-server:staging
+                      docker pull ghcr.io/ctrlaltelite-devs/labres-manager-server:${SHA_TAG}
+
+                      # 🚀 Stop old containers before starting new ones
+                      docker compose -p labres-staging -f docker-compose.staging.yml down
+
+                      # 🆕 Start new containers
+                      docker compose -p labres-staging -f docker-compose.staging.yml up -d
+              
