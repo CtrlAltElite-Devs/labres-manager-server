@@ -4,31 +4,57 @@ import { Logger } from "@nestjs/common";
 import "dotenv/config";
 import { License } from '../entities/license.entity';
 
-
 export class LicenseSeeder extends Seeder {
     private readonly logger = new Logger(LicenseSeeder.name);
     
     async run(em: EntityManager): Promise<void> {
-        this.logger.log("Seeding Sample License");
-
-        const licenseKey = process.env.SUPER_LICENSE;
-
-        if(!licenseKey){
-            this.logger.fatal("Failed to seed super license, make sure super license is in .env file")
+        const executeSeeder = async () => {
+            const masterLicenseKey = process.env.SUPER_LICENSE;
+            if (process.env.NODE_ENV !== 'production') {
+                const licenseCount = 10;
+                const savedLicenses = await em.findAll(License);
+                if(!(savedLicenses.length >= licenseCount)){
+                    const licensePrefix = 'TEST_LICENSE';
+                    const testLicenses = Array.from({ length: licenseCount }, (_, i) => {
+                        const license = new License();
+                        license.licenseKey = `${licensePrefix}${i + 1}`;
+                        return license;
+                    });
+                    try {
+                        await em.insertMany(License, testLicenses);
+                    } catch (error) {
+                        this.logger?.log?.('Failed to insert test licenses:', error);
+                    }
+                } else {
+                    this.logger.log("Database Already has test licenses");
+                }
+            }
+    
+            if(!masterLicenseKey){
+                this.logger.fatal("Failed to seed super license, make sure super license is in .env file");
+                return;
+            }
+    
+            const exists = await em.findOne(License, {licenseKey: masterLicenseKey});
+    
+            if(exists){
+                this.logger.log("Master License key is already added");
+                return;
+            }
+    
+            const license = new License();
+            license.licenseKey = masterLicenseKey!;
+            
+            await em.insert(License, license);
+            this.logger.log("Super License seeded");
         }
 
-        const exists = await em.findOne(License, {licenseKey});
+        await this.licenseSeederRunner(executeSeeder);   
+    }
 
-        if(exists){
-            this.logger.log("License key is already added");
-            return;
-        }
-
-        const license = new License();
-        license.licenseKey = licenseKey!;
-        
-        await em.insert(License, license);
-        this.logger.log("Super License seeded");
+    private async licenseSeederRunner(delegate: () => Promise<void>){
+        await delegate();
+        this.logger.log(`Finished running ${LicenseSeeder.name}`);
     }
 
 }

@@ -1,0 +1,25 @@
+# Ignore node modules
+node_modules
+
+# Ignore build output
+dist
+build
+
+# Ignore logs
+*.log
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore git files
+.git
+.gitignore
+
+# Ignore Docker files themselves
+Dockerfile
+docker-compose.yml
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db

@@ -1,23 +1,27 @@
 import {
   BadRequestException,
   ForbiddenException,
-  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
-import { InjectRepository } from '@mikro-orm/nestjs';
 import { User } from 'src/entities/user.entity';
-import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import bcrypt from 'bcrypt';
-import { provideToken } from 'src/utils/jwt-utils';
-import { LoginResponseDto } from './dto/login-response.dto';
 import { CheckPidResponseDto } from './dto/check-pid-response.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { JwtUserPayloadDto } from '../../utils/jwt-payload.dto';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import { UserDto } from './dto/user.dto';
+import { UserCacheKey } from 'src/helpers/cache-helpers/user.cache';
+import { LoginResponseV2Dto } from './dto/login/login-response-v2.dto';
+import { LoginResponseDto } from './dto/login/login-response.dto';
+import { CustomJwtService } from '../common/custom-jwt-service';
+import { RefreshTokenService } from '../common/refresh-token-service';
+import { RequestMetadata } from 'src/security/common/metadata-request';
+import { RefreshTokenResponseDto } from './dto/refresh-token/refresh-token-response.dto';
+import { UserRepository } from 'src/repositories/user.repository';
+import { UnitOfWork } from '../common/unit-of-work';
+import { CacheService } from '../common/cache-service';
 
 
 @Injectable()
@@ -25,11 +29,11 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: EntityRepository<User>,
-    private readonly entityManager: EntityManager,
-    @Inject(CACHE_MANAGER) 
-    private cacheManager: Cache
+    private readonly userRepository: UserRepository,
+    private readonly unitOfWork: UnitOfWork,
+    private readonly cacheService: CacheService,
+    private readonly jwtService: CustomJwtService,
+    private readonly refreshTokenService: RefreshTokenService
   ) {}
 
   async Login(dto: LoginDto): Promise<LoginResponseDto> {
@@ -42,7 +46,7 @@ export class AuthService {
     }
 
     if (!existingUser.password) {
-      throw new BadRequestException('User needs to onboarding to set password');
+      throw new BadRequestException('User needs to be onboarded to set password');
     }
 
     const isMatch = await bcrypt.compare(dto.password, existingUser.password);
@@ -51,12 +55,53 @@ export class AuthService {
       throw new ForbiddenException('Invalid Credentials');
     }
 
-    const token = provideToken(JwtUserPayloadDto.MapUser(existingUser));
+    const payload = JwtUserPayloadDto.MapUser(existingUser);
+    const { token } = await this.jwtService.CreateSignedTokens(payload);
 
     return {
       user: existingUser,
       token,
     };
+  }
+
+  async LoginV2(dto: LoginDto, metaData: RequestMetadata) : Promise<LoginResponseV2Dto> {
+    const existingUser = await this.userRepository.findOne({
+      pid: dto.pid,
+    });
+
+    if (existingUser === null) {
+      throw new NotFoundException("User doesn't exist");
+    }
+
+    if (!existingUser.password) {
+      throw new BadRequestException('User needs to be onboarded to set password');
+    }
+
+    const isMatch = await bcrypt.compare(dto.password, existingUser.password);
+
+    if (!isMatch) {
+      throw new ForbiddenException('Invalid Credentials');
+    }
+
+    const payload = JwtUserPayloadDto.MapUser(existingUser);
+    const { token, refreshToken } = await this.jwtService.CreateSignedTokens(payload);
+    await this.refreshTokenService.Store(existingUser.pid, refreshToken, metaData);
+
+    const response = LoginResponseV2Dto.Map(existingUser, token, refreshToken);
+
+    return response;
+  }
+
+  //todo common ni sya sa admin service maybe
+  async Refresh(refreshToken: string, metaData: RequestMetadata) : Promise<RefreshTokenResponseDto>{
+    const { userId, token: newToken, refreshToken: newRefreshToken } = await this.refreshTokenService.RemoveAndReturnNewTokens(refreshToken, metaData);
+    await this.refreshTokenService.Store(userId, newRefreshToken, metaData);
+    
+    return {
+      token: newToken,
+      refreshToken: newRefreshToken,
+      message: "Token refreshed succesfully"
+    }
   }
 
   async CheckPid(pid: string) {
@@ -84,21 +129,32 @@ export class AuthService {
 
     user.password = await bcrypt.hash(password, 10);
 
-    await this.entityManager.flush();
-    await this.cacheManager.del(pid);
+    await this.unitOfWork.Commit({
+      invalidateCacheKey: dto.pid
+    })
 
     return user;
   }
 
   async GetUserById(pid: string) {
-    const userCache = await this.cacheManager.get<User>(pid);
-    if(userCache){
-      this.logger.log(`Found user cache: ${pid}`);
-      return userCache;
+    return await this.userRepository.findOne({pid});
+  }
+
+  async LogOut(userId: string){
+    await this.refreshTokenService.RemoveRefreshToken(userId);
+  }
+
+  async GetUserByIdForGuard(pid: string){
+    const userDtoCache = await this.cacheService.get<UserDto>(UserCacheKey(pid));
+    if(userDtoCache){
+      this.logger.log(`User cache hit: ${pid}`)
+      return userDtoCache;
     }
-    const user = await this.userRepository.findOne({pid});
-    this.logger.log(`Setting user cache: ${pid}`);
-    await this.cacheManager.set(pid, user);
-    return user;
+    const userDto = await this.userRepository.findOne({pid}, {
+      fields: ["pid"]
+    })
+    this.logger.log(`User cache miss: ${pid}`);
+    await this.cacheService.set(UserCacheKey(pid), userDto, 1000*10);
+    return userDto
   }
 }

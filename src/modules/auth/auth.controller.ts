@@ -1,42 +1,106 @@
-import { Body, Controller, Get, Post, Put, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query, Req, Res, UseFilters, UseInterceptors, Version } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CheckPidDto } from './dto/check-pid.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
-import { ACCESS_TOKEN } from 'src/configurations/bootstrap-configuration';
-import { CacheInterceptor } from '@nestjs/cache-manager';
-import { AuthenticatedRequest } from 'src/guards/application/application-requests';
-import { AuthGuard } from 'src/guards/application/auth.guard';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { AuthenticatedRequest } from 'src/security/common/application-requests';
+import { Response } from 'express';
+import { RefreshTokenInterceptor } from 'src/security/interceptors/refresh-token.interceptor';
+import { EnrichedRefreshTokenRequest } from 'src/security/common/refresh-token-request';
+import { EnrichedRequest } from 'src/security/common/metadata-request';
+import { RefreshTokenDto } from './dto/refresh-token/refresh-token.dto';
+import { UseAuthenticationGuard, UseUserOnlyGuard } from 'src/security/decorators/index.decorators';
+import { CookieHelpers } from 'src/helpers/cookie-helpers/cookie-helper';
+import { MetaDataInterceptor } from 'src/security/interceptors/metadata-interceptor';
+import { RefreshTokenExceptionFilter } from 'src/security/filters/refresh-token-exception.filter';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
-
-  @Post('login')
-  async login(@Body() request: LoginDto) {
-    const response = await this.authService.Login(request);
-    return response;
-  }
-
-  @Get('me')
-  @UseGuards(AuthGuard)
-  @UseInterceptors(CacheInterceptor)
-  @ApiBearerAuth(ACCESS_TOKEN)
-  me(@Req() request: AuthenticatedRequest) {
-    return request.user
-  }
-
-  @Post('check-pid')
-  async checkPid(@Body() request: CheckPidDto) {
-    const { pid } = request;
-    const response = await this.authService.CheckPid(pid);
-    return response;
-  }
-
-  @Put('update-user')
-  async updateUser(@Body() request: UpdatePasswordDto) {
-    const response = await this.authService.UpdatePassword(request);
-    return response;
-  }
+    constructor(
+        private readonly authService: AuthService,
+    ) {}
+    
+    @Post("login")
+    async login(@Body() request: LoginDto) {
+        const response = await this.authService.Login(request);
+        return response;
+    }
+    
+    @Post("login")
+    @UseInterceptors(MetaDataInterceptor)
+    @Version("2")
+    async loginV2(
+        @Query('useCookie') useCookie: boolean,
+        @Body() body: LoginDto, 
+        @Req() request: EnrichedRequest,
+        @Res({passthrough: true}) response: Response,
+    ){
+        const authResponse = await this.authService.LoginV2(body, request.metaData!);
+        if(useCookie){
+            CookieHelpers.SetTokens(response, {
+                token: authResponse.token,
+                refreshToken: authResponse.refreshToken
+            });
+            authResponse.refreshToken = "";
+            authResponse.token = "";
+        }
+        return authResponse;
+    }
+    
+    @Post("log-out")
+    @UseAuthenticationGuard()
+    async logOut(@Req() request: AuthenticatedRequest, @Res({passthrough: true}) response : Response){
+        const { user } = request;
+        const userId = user!.pid;
+        await this.authService.LogOut(userId)
+        CookieHelpers.RemoveTokens(response);
+        return { message: "Logged out Succesfully"}
+    }
+    
+    @Get('me')
+    @UseUserOnlyGuard()
+    @UseInterceptors(CacheInterceptor)
+    @CacheTTL(5)
+    me(@Req() request: AuthenticatedRequest) {
+        return request.user
+    }
+    
+    @Post("refresh")
+    @UseInterceptors(RefreshTokenInterceptor)
+    @UseInterceptors(MetaDataInterceptor)
+    @UseFilters(RefreshTokenExceptionFilter)
+    async refresh(
+        @Body() body : RefreshTokenDto, // used for swagger doc
+        @Req() request: EnrichedRefreshTokenRequest,
+        @Query('useCookie') useCookie: boolean,
+        @Res({passthrough: true}) response: Response,
+    ){
+        const refreshTokenResponse = await this.authService.Refresh(request.refreshToken, request.metaData!);
+        
+        if(useCookie){
+            CookieHelpers.SetTokens(response, {
+                token: refreshTokenResponse.token,
+                refreshToken: refreshTokenResponse.refreshToken
+            });
+            refreshTokenResponse.refreshToken = "";
+            refreshTokenResponse.token = "";
+        }
+        
+        return refreshTokenResponse
+    }
+    
+    @Post('check-pid')
+    async checkPid(@Body() request: CheckPidDto) {
+        const { pid } = request;
+        const response = await this.authService.CheckPid(pid);
+        return response;
+    }
+    
+    @Put('update-user')
+    async updateUser(@Body() request: UpdatePasswordDto) {
+        // todo add security measures
+        const response = await this.authService.UpdatePassword(request);
+        return response;
+    }
 }

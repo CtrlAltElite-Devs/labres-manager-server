@@ -1,9 +1,13 @@
-import { Entity, ManyToOne, PrimaryKey, Property } from "@mikro-orm/core";
+import { Entity, EntityRepositoryType, ManyToOne, PrimaryKey, Property } from "@mikro-orm/core";
 import { v4 } from "uuid";
 import { User } from "./user.entity";
+import { License } from "./license.entity";
+import { TestResultRepository } from "src/repositories/results.repository";
 
-@Entity()
+@Entity({repository: () => TestResultRepository })
 export class TestResult {
+    [EntityRepositoryType]? : TestResultRepository
+
     @PrimaryKey({columnType: "uuid"})
     id = v4();
 
@@ -11,6 +15,11 @@ export class TestResult {
         fieldName: 'userPid',
     })
     user: User;
+
+    @ManyToOne(() => License, {
+        fieldName: "machine_license_id"
+    })
+    machine: License
 
     @Property()
     testName: string;
