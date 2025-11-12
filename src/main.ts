@@ -26,7 +26,7 @@ async function bootstrap() {
 
   await ApplyLensConfigurations(app);
 
-  await app.listen(process.env.PORT ?? 5001);
+  await app.listen(process.env.PORT ?? 5030);
 }
 
 bootstrap()

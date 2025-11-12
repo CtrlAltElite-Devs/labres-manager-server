@@ -1,15 +1,9 @@
-version: "3.8"
-
 services:
   api:
-    image: lrnzo349/staging-labres:latest
+    image: ghcr.io/ctrlaltelite-devs/labres-manager-server:latest
     ports:
-      - "5001:5001"
+      - "5030:5030"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure

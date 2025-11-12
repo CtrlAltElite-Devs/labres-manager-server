@@ -1,0 +1,7 @@
+services:
+    api:
+        image: labres:latest
+        ports:
+            - "5030:5030"
+        env_file:
+            - .env.test
