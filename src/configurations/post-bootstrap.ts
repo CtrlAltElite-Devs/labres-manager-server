@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { SWAGGER_ENDPOINT } from "./common-configuration";
 
-const port = process.env.PORT ?? 5001;
+const port = process.env.PORT ?? 5030;
 
 function exposeSwaggerUrlInLogs() {
     if (process.env.NODE_ENV !== "development") return;
