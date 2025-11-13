@@ -12,7 +12,6 @@ export class CreateResultResponseDto {
         dto.testName = result.testName;
         dto.size = result.size;
         dto.testDate = result.testDate;
-
         return dto;
     }
 }
