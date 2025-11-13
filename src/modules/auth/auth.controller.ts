@@ -14,6 +14,9 @@ import { UseAuthenticationGuard, UseUserOnlyGuard } from 'src/security/decorator
 import { CookieHelpers } from 'src/helpers/cookie-helpers/cookie-helper';
 import { MetaDataInterceptor } from 'src/security/interceptors/metadata-interceptor';
 import { RefreshTokenExceptionFilter } from 'src/security/filters/refresh-token-exception.filter';
+import { IdentifyRequestDto } from './dto/identify/identify.request.dto';
+import { VerifyEmailDto } from './dto/verify-email/verify-email.dto';
+import { SendVerificationEmailDto } from './dto/verify-email/send-verification-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -103,4 +106,32 @@ export class AuthController {
         const response = await this.authService.UpdatePassword(request);
         return response;
     }
+
+    @Post("identify/step1")
+    async identifyStep1(@Body() request: CheckPidDto) {
+        const response = await this.authService.IdentifyStep1(request.pid);
+        return response;
+    }
+
+    @Post("identify/step2")
+    async identifyStep2(@Body() request: IdentifyRequestDto) {
+        const response = await this.authService.IdentifyStep2(request);
+        return response;
+    }
+
+    @Post("send-verification-email")
+    async setVerificationEmail(@Body() request: SendVerificationEmailDto){
+        return await this.authService.SendVerificationEmail(request.email);
+    }
+
+    @Post("verify-email")
+    async verifyEmail(@Body() request: VerifyEmailDto) {
+        return await this.authService.VerifyEmail(request);
+    }
+
+    @Put("set-password")
+    async setPassword(@Body() request: UpdatePasswordDto){
+        return await this.authService.UpdatePasswordV2(request);
+    }
+
 }

@@ -22,6 +22,12 @@ import { RefreshTokenResponseDto } from './dto/refresh-token/refresh-token-respo
 import { UserRepository } from 'src/repositories/user.repository';
 import { UnitOfWork } from '../common/unit-of-work';
 import { CacheService } from '../common/cache-service';
+import { IdentifyRequestDto } from './dto/identify/identify.request.dto';
+import { IdentifyResponseDto } from './dto/identify/identify.response.dto';
+// import { RegisterEmailDto } from './dto/register-email/register-email.dto';
+import { VerifyEmailDto } from './dto/verify-email/verify-email.dto';
+import { EmailService } from '../common/email-service';
+import { OTPRepository } from 'src/repositories/otp.repository';
 
 
 @Injectable()
@@ -33,7 +39,9 @@ export class AuthService {
     private readonly unitOfWork: UnitOfWork,
     private readonly cacheService: CacheService,
     private readonly jwtService: CustomJwtService,
-    private readonly refreshTokenService: RefreshTokenService
+    private readonly refreshTokenService: RefreshTokenService,
+    private readonly emailService: EmailService,
+    private readonly otpRepository: OTPRepository
   ) {}
 
   async Login(dto: LoginDto): Promise<LoginResponseDto> {
@@ -130,7 +138,7 @@ export class AuthService {
     user.password = await bcrypt.hash(password, 10);
 
     await this.unitOfWork.Commit({
-      invalidateCacheKey: dto.pid
+      invalidateCacheKey: UserCacheKey(pid)
     })
 
     return user;
@@ -150,11 +158,140 @@ export class AuthService {
       this.logger.log(`User cache hit: ${pid}`)
       return userDtoCache;
     }
-    const userDto = await this.userRepository.findOne({pid}, {
-      fields: ["pid"]
+
+    const user = await this.userRepository.findOne({pid}, {
+      fields: ["pid", "dob", "emailVerified", "lastName"]
     })
     this.logger.log(`User cache miss: ${pid}`);
-    await this.cacheService.set(UserCacheKey(pid), userDto, 1000*10);
-    return userDto
+    if(user === null){
+      await this.cacheService.set(UserCacheKey(pid), null, 1000*10);
+      return null;
+    } else {
+      const userDto = new UserDto();
+      userDto.pid = user.pid;
+      userDto.dob = user.dob;
+      userDto.emailVerified = user.emailVerified;
+      userDto.lastName = user.lastName;
+      await this.cacheService.set(UserCacheKey(pid), userDto, 1000*10);
+      return userDto;
+    }
   }
+
+  async IdentifyStep1(pid:string){
+    const user = await this.userRepository.findOne({pid});
+
+    if(user === null){
+      this.logger.log("User was not found");
+      return IdentifyResponseDto.NotFound();
+    }
+    
+    if(user.needsOnboarding())
+      return IdentifyResponseDto.NeedsOnboarding(user.pid);
+
+    return IdentifyResponseDto.ReadyToLogin(user);
+  }
+  
+  async IdentifyStep2(dto: IdentifyRequestDto) : Promise<IdentifyResponseDto>{
+    const user = await this.userRepository.findOne({pid: dto.pid});
+
+    if(user === null){
+      this.logger.log("User was not found");
+      return IdentifyResponseDto.NotFound();
+    }
+
+    if(user.lastName?.toUpperCase() !== dto.lastname.toUpperCase()){
+      this.logger.log("User last name mismatch");
+      return IdentifyResponseDto.NotFound();
+    }
+
+    const userDob = new Date(user.dob!).toISOString().split('T')[0];
+    const dtoDob = new Date(dto.dob).toISOString().split('T')[0];
+
+    if (userDob !== dtoDob) {
+      this.logger.log(`User dob mismatch:: ${userDob} and ${dtoDob}`);
+      return IdentifyResponseDto.NotFound();
+    }
+
+    if(!user.email){
+      return IdentifyResponseDto.NeedsEmail(user.pid);
+    }
+
+    if(!user.password){
+      return IdentifyResponseDto.EmailRegistered(user);
+    }
+
+    return IdentifyResponseDto.ReadyToLogin(user);
+  }
+
+  // async RegisterEmail(dto: RegisterEmailDto){
+  //   const user = await this.userRepository.findOne({pid: dto.pid});
+  //   if(user === null) throw new BadRequestException("pid not found")
+
+  //   if(user.email){
+  //     throw new BadRequestException("User already registered with an existing email");
+  //   }
+
+  //   user.email = dto.email;
+
+  //   await this.unitOfWork.Commit({invalidateCacheKey: UserCacheKey(user.pid)})
+
+  //   // simulate otp or create a dedicted service
+
+  //   return {
+  //     status: "otp_sent",
+  //     message: `Verification code sent to ${user.email}`
+  //   }
+  // }
+
+  async VerifyEmail(dto: VerifyEmailDto){
+    const user = await this.userRepository.findOne({pid: dto.pid});
+    if(user === null) throw new BadRequestException("pid not found")
+
+    const otp = await this.otpRepository.findOne({email: dto.email});
+
+    if(otp === null) 
+      throw new BadRequestException("Invalid or expired Code");
+
+    if(otp.code !== dto.code)
+      throw new BadRequestException("Invalid or expired Code")
+
+    user.emailVerified = true;
+    user.email = dto.email;
+
+    await this.unitOfWork.Commit({invalidateCacheKey: UserCacheKey(user.pid)})
+
+    return {
+      message: "Email Verification Successful"
+    }
+  }
+
+  async UpdatePasswordV2(dto: UpdatePasswordDto){
+    const user = await this.userRepository.findOne({pid: dto.pid});
+    if(user === null) throw new BadRequestException("pid not found")
+
+    if(!user.emailVerified || !user.email) 
+      throw new BadRequestException("email is not yet verified");
+
+    user.password = await bcrypt.hash(dto.password, 10);
+  
+    await this.unitOfWork.Commit({
+      invalidateCacheKey: UserCacheKey(user.pid)
+    })
+
+    const responseDto = new UserDto();
+    responseDto.pid = user.pid;
+    responseDto.lastName = user.lastName;
+    responseDto.emailVerified = user.emailVerified;
+    responseDto.dob = user.dob;
+    return responseDto;
+  }
+
+  async SendVerificationEmail(email: string){
+    await this.emailService.sendVerificationEmail(email);
+
+    return {
+      message: "We have sent you an email, please check your inbox for the OTP."
+    }
+  }
+
 }
