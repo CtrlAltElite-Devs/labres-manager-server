@@ -1,29 +1,29 @@
 import { Entity, EntityRepositoryType, Enum, Opt, PrimaryKey, Property, Unique } from "@mikro-orm/core";
-import { AdminRepository } from "src/repositories/admin.repository";
+import { AdminRepository } from "../repositories/admin.repository";
 import { v4 } from "uuid";
 
 @Entity({ repository: () => AdminRepository })
 export class Admin {
-    [EntityRepositoryType]? : AdminRepository
+  [EntityRepositoryType]?: AdminRepository
 
-    @PrimaryKey({type: "uuid"})
-    id = v4();
+  @PrimaryKey({ type: "uuid" })
+  id = v4();
 
-    @Property()
-    @Unique()
-    email!: string;
+  @Property()
+  @Unique()
+  email!: string;
 
-    @Property()
-    password!: string;   
+  @Property()
+  password!: string;
 
-    @Enum({items: () => AdminRole, nativeEnumName: "admin_role"})
-    role!: AdminRole;
+  @Enum({ items: () => AdminRole, nativeEnumName: "admin_role" })
+  role!: AdminRole;
 
-    @Property()
-    createdAt: Date & Opt = new Date();
+  @Property()
+  createdAt: Date & Opt = new Date();
 }
 
 export enum AdminRole {
-    ADMIN = "admin",
-    SUPER_ADMIN = "super_admin"
+  ADMIN = "admin",
+  SUPER_ADMIN = "super_admin"
 }

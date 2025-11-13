@@ -2,36 +2,53 @@ import { Entity, EntityRepositoryType, ManyToOne, PrimaryKey, Property } from "@
 import { v4 } from "uuid";
 import { User } from "./user.entity";
 import { License } from "./license.entity";
-import { TestResultRepository } from "src/repositories/results.repository";
+import { TestResultRepository } from "../repositories/results.repository"
+import { ValidatedTestResultV2 } from '../modules/results/validators/result.validator';
 
-@Entity({repository: () => TestResultRepository })
+@Entity({ repository: () => TestResultRepository })
 export class TestResult {
-    [EntityRepositoryType]? : TestResultRepository
+  [EntityRepositoryType]?: TestResultRepository
 
-    @PrimaryKey({columnType: "uuid"})
-    id = v4();
+  @PrimaryKey({ columnType: "uuid" })
+  id = v4();
 
-    @ManyToOne(() => User, {
-        fieldName: 'userPid',
-    })
-    user: User;
+  @ManyToOne(() => User, {
+    fieldName: 'userPid',
+  })
+  user: User;
 
-    @ManyToOne(() => License, {
-        fieldName: "machine_license_id"
-    })
-    machine: License
+  @ManyToOne(() => License, {
+    fieldName: "machine_license_id"
+  })
+  machine: License
 
-    @Property()
-    testName: string;
+  @Property()
+  testName: string;
 
-    @Property()
-    binaryPdf: Buffer;
+  @Property()
+  binaryPdf: Buffer;
 
-    @Property()
-    size: number;
+  @Property()
+  size: number;
 
-    @Property({columnType: "timestamp"})
-    testDate: Date;
+  @Property({ columnType: "timestamp" })
+  testDate: Date;
+
+  static Create(
+    user: User, 
+    data: ValidatedTestResultV2, 
+    file: Express.Multer.File,
+    license: License,
+  ) : TestResult{ 
+    const test = new TestResult();
+    test.user = user;
+    test.testDate = data.testDate;
+    test.testName = data.testName;
+    test.size = data.size;
+    test.machine = license;
+    test.binaryPdf = file.buffer;
+    return test;
+  }
 }
 
 
