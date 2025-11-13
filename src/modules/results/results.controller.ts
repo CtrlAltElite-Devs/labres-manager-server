@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, Query, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Query, Req, UploadedFile, UseInterceptors, Version } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { CreateResultDto } from './dto/create-result.dto';
@@ -38,6 +38,18 @@ export class ResultsController {
     const response = await this.resultService.UploadTestResults(file, request.license!);
     return response;
   }
+
+  @Post()
+  @UseInterceptors(FileInterceptor('file'))
+  @UseMachineGuard()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateResultDto })
+  @Version("2")
+  async uploadFilesV2(@UploadedFile() file: Express.Multer.File, @Req() request: AuthenticatedMachineRequest) {
+    const response = await this.resultService.UploadTestResultsV2(file, request.license!);
+    return response;
+  }
+
 
   @Get()
   @UseAuthenticationGuard()

@@ -54,6 +54,15 @@ export class ResultsService {
     return CreateResultResponseDto.Map(testResult);
   }
 
+  async UploadTestResultsV2(file: Express.Multer.File, license: License){
+    const data = this.resultHelper.ValidateTestResultV2(file);
+    const user = await this.userRepository.getOrCreateUser(data);
+    const testResult = TestResult.Create(user, data, file, license);
+    this.testResultRepository.create(testResult);
+    await this.unitofWork.Commit();
+    return CreateResultResponseDto.Map(testResult);
+  }
+
   async GetTestResults(params: ResultQueryResourceParameters, user?: UserDto, admin?: AdminDto) {
     let results: TestResultWithoutPdf[];
     if (admin) {
