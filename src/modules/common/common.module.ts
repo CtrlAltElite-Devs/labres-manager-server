@@ -5,11 +5,13 @@ import { CustomJwtService } from "./custom-jwt-service";
 import { RefreshTokenService } from "./refresh-token-service";
 import { UnitOfWork } from "./unit-of-work";
 import { CacheService } from "./cache-service";
+import { OTP } from "src/entities/security/otp.entity";
+import { EmailService } from "./email-service";
 
 
 @Module({
-    imports: [MikroOrmModule.forFeature([RefreshToken])],
-    providers: [CustomJwtService, RefreshTokenService, UnitOfWork, CacheService],
-    exports: [CustomJwtService, RefreshTokenService, UnitOfWork, CacheService]
+    imports: [MikroOrmModule.forFeature([RefreshToken, OTP])],
+    providers: [CustomJwtService, RefreshTokenService, UnitOfWork, CacheService, EmailService],
+    exports: [CustomJwtService, RefreshTokenService, UnitOfWork, CacheService, EmailService]
 })
 export class CommonModule{}

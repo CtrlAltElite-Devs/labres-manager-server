@@ -63,7 +63,7 @@ export class ResultHelper {
             throw new BadRequestException("File type must be application/pdf");
         }
 
-        const parts = file.originalname.split('_');
+        const parts = file.originalname.replace('.pdf', '').split('_');
 
         if (parts.length < this.validators.length) {
             throw new BadRequestException(
@@ -78,6 +78,7 @@ export class ResultHelper {
         result.pid = this.validators[0].validate(parts[0]);
         result.dob = this.validators[1].validate(parts[1]);
         result.lastName = this.validators[2].validate(parts[2]);
+        console.log(JSON.stringify(result, null, 2));
 
         // testName can have underscores, take everything from index 3 to second-last part
         const testNamePart = parts.slice(3, parts.length - 1).join(' ');

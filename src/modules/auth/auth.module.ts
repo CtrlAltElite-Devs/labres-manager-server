@@ -6,9 +6,10 @@ import { User } from 'src/entities/user.entity';
 import { Admin } from 'src/entities/admin.entity';
 import { CommonModule } from '../common/common.module';
 import { AdminModule } from '../admin/admin.module';
+import { OTP } from 'src/entities/security/otp.entity';
 
 @Module({
-  imports: [MikroOrmModule.forFeature([User, Admin]), CommonModule, AdminModule],
+  imports: [MikroOrmModule.forFeature([User, Admin, OTP]), CommonModule, AdminModule],
   controllers: [AuthController],
   providers: [AuthService],
   exports: [AuthService]
