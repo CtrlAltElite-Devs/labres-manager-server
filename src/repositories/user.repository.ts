@@ -1,7 +1,7 @@
 import { EntityRepository } from "@mikro-orm/core";
-import { User } from "src/entities/user.entity";
 import { ValidatedTestResultV2 } from '../modules/results/validators/result.validator';
 import { Logger } from "@nestjs/common";
+import { User } from '../entities/user.entity';
 
 export class UserRepository extends EntityRepository<User>{
     private readonly logger = new Logger(UserRepository.name);

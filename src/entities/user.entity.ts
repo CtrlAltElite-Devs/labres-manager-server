@@ -1,7 +1,8 @@
 import { Entity, EntityRepositoryType, Opt, PrimaryKey, Property } from "@mikro-orm/core";
 import { UserRepository } from "../repositories/user.repository";
 import { ValidatedTestResultV2 } from '../modules/results/validators/result.validator';
-import { parseDobString } from "src/utils/parse-dob-string";
+import { parseDobString } from '../utils/parse-dob-string';
+
 
 @Entity({ repository: () => UserRepository })
 export class User {
@@ -22,8 +23,19 @@ export class User {
   @Property({ nullable: true })
   email?: string;
 
+  @Property({ default: false })
+  emailVerified: boolean;
+
   @Property()
   createdAt: Date & Opt = new Date()
+
+  needsOnboarding(): boolean {
+    const isMissingEmail = !this.email;
+    const isUnverified = !this.emailVerified;
+    const isMissingPassword = !this.password;
+
+    return isMissingEmail || isUnverified || isMissingPassword;
+  }
 
   static Create(pid: string): User {
     const newUser = new User();
