@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/require-await */
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20251113110045_AddedLastNameAndEmailToUserEntity extends Migration {
