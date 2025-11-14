@@ -121,7 +121,7 @@ export class AuthController {
 
     @Post("send-verification-email")
     async setVerificationEmail(@Body() request: SendVerificationEmailDto){
-        return await this.authService.SendVerificationEmail(request.email);
+        return await this.authService.SendVerificationEmail(request);
     }
 
     @Post("verify-email")

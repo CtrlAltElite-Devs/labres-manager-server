@@ -1,4 +1,4 @@
-import { Entity, EntityRepositoryType, Opt, PrimaryKey, Property } from "@mikro-orm/core";
+import { Entity, EntityRepositoryType, Opt, PrimaryKey, Property, Unique } from "@mikro-orm/core";
 import { UserRepository } from "../repositories/user.repository";
 import { ValidatedTestResultV2 } from '../modules/results/validators/result.validator';
 import { parseDobString } from '../utils/parse-dob-string';
@@ -21,6 +21,7 @@ export class User {
   lastName?: string;
 
   @Property({ nullable: true })
+  @Unique()
   email?: string;
 
   @Property({ default: false })
