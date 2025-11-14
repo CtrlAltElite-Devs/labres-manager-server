@@ -252,7 +252,7 @@ export class AuthService {
   async VerifyEmail(dto: VerifyEmailDto) {
     const emailExists = await this.userRepository.findOne({ email: dto.email });
 
-    if (emailExists) {
+    if (emailExists && emailExists.pid !== dto.pid) {
       throw new BadRequestException(
         'This email is already registered to another account',
       );
