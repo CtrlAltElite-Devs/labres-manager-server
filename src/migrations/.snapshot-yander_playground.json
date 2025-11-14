@@ -339,6 +339,16 @@
           "nullable": false,
           "length": 255,
           "mappedType": "string"
+        },
+        "expiry_time": {
+          "name": "expiry_time",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
         }
       },
       "name": "otp",
