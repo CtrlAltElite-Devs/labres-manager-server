@@ -11,9 +11,19 @@ import { LicenseModule } from './modules/license/license.module';
 import { FeatureFlagModule } from './modules/feature-flag/feature-flag.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RequestLoggerMiddleware } from './security/middlewares/request-logger-middleware';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60 * 1000,
+          limit: 50
+        }
+      ]
+    }),
     AuthModule, ResultsModule, AdminModule, LicenseModule, FeatureFlagModule,
     MikroOrmModule.forRootAsync({useFactory: () => config}),
     JwtModule.register({
@@ -24,7 +34,11 @@ import { RequestLoggerMiddleware } from './security/middlewares/request-logger-m
     ConfigModule.forRoot({isGlobal: true}),
     CacheModule.register({isGlobal: true})
   ],
-  controllers: [HealthController]
+  controllers: [HealthController],
+  providers: [{
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard
+  }]
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

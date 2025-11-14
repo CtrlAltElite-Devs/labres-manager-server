@@ -17,6 +17,7 @@ import { RefreshTokenExceptionFilter } from 'src/security/filters/refresh-token-
 import { IdentifyRequestDto } from './dto/identify/identify.request.dto';
 import { VerifyEmailDto } from './dto/verify-email/verify-email.dto';
 import { SendVerificationEmailDto } from './dto/verify-email/send-verification-email.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -69,6 +70,7 @@ export class AuthController {
         return request.user
     }
     
+    @Throttle({ default: { limit: 3, ttl: 60 * 1000 } })
     @Post("refresh")
     @UseInterceptors(RefreshTokenInterceptor)
     @UseInterceptors(MetaDataInterceptor)
