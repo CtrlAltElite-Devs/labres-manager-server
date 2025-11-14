@@ -136,4 +136,9 @@ export class AuthController {
         return await this.authService.UpdatePasswordV2(request);
     }
 
+    @Post("test-email")
+    async testEmail(){
+        return await this.authService.testEmail();
+    }
+
 }
