@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { SWAGGER_ENDPOINT } from "./common-configuration";
+import { StartupJobRegistry } from "src/cron-jobs/startup-job-registry";
 
 const port = process.env.PORT ?? 5030;
 
@@ -22,6 +23,7 @@ function exposeLensDashboardForDev() {
 const usePostBootstrap = () => {
     exposeSwaggerUrlInLogs();
     exposeLensDashboardForDev();
+    StartupJobRegistry.printSummary();
 }
 
 export default usePostBootstrap;

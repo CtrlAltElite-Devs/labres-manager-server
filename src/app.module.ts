@@ -1,10 +1,15 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { AuthModule } from './modules/auth/auth.module';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { AdminModule } from './modules/admin/admin.module';
 import { ResultsModule } from './modules/results/results.module';
 import { HealthController } from './modules/health/health.controller';
-import config from "../mikro-orm.config";
+import config from '../mikro-orm.config';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { LicenseModule } from './modules/license/license.module';
@@ -13,6 +18,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { RequestLoggerMiddleware } from './security/middlewares/request-logger-middleware';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
+import { RemoveExpiredOtpJob } from './cron-jobs/jobs/remove-expired-otp.job';
+import { RemoveExpiredRefreshTokens } from './cron-jobs/jobs/remove-expired-refresh-tokens.job';
 
 @Module({
   imports: [
@@ -20,25 +28,34 @@ import { APP_GUARD } from '@nestjs/core';
       throttlers: [
         {
           ttl: 60 * 1000,
-          limit: 50
-        }
-      ]
+          limit: 50,
+        },
+      ],
     }),
-    AuthModule, ResultsModule, AdminModule, LicenseModule, FeatureFlagModule,
-    MikroOrmModule.forRootAsync({useFactory: () => config}),
+    AuthModule,
+    ResultsModule,
+    AdminModule,
+    LicenseModule,
+    FeatureFlagModule,
+    MikroOrmModule.forRootAsync({ useFactory: () => config }),
+    ScheduleModule.forRoot(),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '300s'}
+      signOptions: { expiresIn: '300s' },
     }),
-    ConfigModule.forRoot({isGlobal: true}),
-    CacheModule.register({isGlobal: true})
+    ConfigModule.forRoot({ isGlobal: true }),
+    CacheModule.register({ isGlobal: true }),
   ],
   controllers: [HealthController],
-  providers: [{
-    provide: APP_GUARD,
-    useClass: ThrottlerGuard
-  }]
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    RemoveExpiredOtpJob,
+    RemoveExpiredRefreshTokens,
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

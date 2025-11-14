@@ -1,11 +1,12 @@
 import { EntityRepository } from '@mikro-orm/core';
-import { OTP } from 'src/entities/security/otp.entity';
+import { OTP } from '../entities/security/otp.entity';
 
 export class OTPRepository extends EntityRepository<OTP> {
   async CreateOTP(email: string) {
     const otp = new OTP();
     otp.code = this.generateOTP();
     otp.email = email;
+    otp.expiryTime = new Date(Date.now() + 5 * 60 * 1000);
 
     await this.upsert(otp, {
       onConflictFields: ['email'],
