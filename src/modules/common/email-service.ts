@@ -29,7 +29,7 @@ export class EmailService {
     const transporter = this.MailTransport();
     const info = await transporter.sendMail({
       from: this.config.get<string>('SMTP_USER'),
-      to: 'llubguban@fullscale.ph',
+      to: 'lorenzolubguban@gmail.com',
       subject: 'Welcome!',
       text: 'Congratulations, ikaw pinaka gwapo sa full scale',
       html: '<b>Congratulations, ikaw pinaka gwapo sa full scale</b>',
