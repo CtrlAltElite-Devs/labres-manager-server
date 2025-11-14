@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OTPRepository } from 'src/repositories/otp.repository';
 import * as nodemailer from 'nodemailer';
@@ -10,6 +10,8 @@ import VerificationCode from 'emails/verification-code';
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
+
   constructor(
     private readonly otpRepository: OTPRepository,
     private readonly config: ConfigService,
@@ -34,14 +36,22 @@ export class EmailService {
   };
 
   async sendVerificationEmail(email: string) {
-    const otp = await this.otpRepository.CreateOTP(email);
+    try {
+      const otp = await this.otpRepository.CreateOTP(email);
 
-    const html = await this.generateEmail(VerificationCode({otp : otp.code}));
-    await this.MailTransport().sendMail({
-      from: `"Lab Result Manager" <${this.config.get<string>('SMTP_USER')}>`,
-      to: email,
-      subject: 'Verification Code',
-      html,
-    });
+      const html = await this.generateEmail(VerificationCode({ otp: otp.code }));
+
+      await this.MailTransport().sendMail({
+        from: `"Lab Result Manager" <${this.config.get<string>('SMTP_USER')}>`,
+        to: email,
+        subject: 'Verification Code',
+        html,
+      });
+
+      this.logger.log(`Verification email sent to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send verification email to ${email}`, error);
+      throw new InternalServerErrorException('Unable to send verification email. Please try again later.');
+    }
   }
 }

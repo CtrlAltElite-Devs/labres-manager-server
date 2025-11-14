@@ -5,3 +5,5 @@ services:
             - "5030:5030"
         env_file:
             - .env.test
+        environment:
+            - NODE_ENV=development
