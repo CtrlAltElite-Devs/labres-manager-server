@@ -49,7 +49,7 @@ export class CookieHelpers {
             response.clearCookie('token', {
                 path: '/',
                 secure: IS_PROD_OR_STAGING,
-                sameSite: IS_PROD_OR_STAGING ? 'none' : 'lax',
+                sameSite: getSameSiteStrategy(),
                 domain: getDomainStrategy()
             });
         } catch (error) {
