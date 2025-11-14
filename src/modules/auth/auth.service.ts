@@ -344,8 +344,4 @@ export class AuthService {
         'We have sent you an email, please check your inbox for the OTP.',
     };
   }
-
-  async testEmail() {
-    return await this.emailService.sendEmailVerificationV2();
-  }
 }

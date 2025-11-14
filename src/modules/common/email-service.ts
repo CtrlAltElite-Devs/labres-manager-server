@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OTP } from 'src/entities/security/otp.entity';
 import { OTPRepository } from 'src/repositories/otp.repository';
 import * as nodemailer from 'nodemailer';
 import { IS_STRICTLY_DEV } from 'src/utils/environment';
+import { render } from '@react-email/render';
+import React from 'react';
+import VerificationCode from 'emails/verification-code';
+
+
 @Injectable()
 export class EmailService {
   constructor(
@@ -25,32 +29,19 @@ export class EmailService {
     return transporter;
   }
 
-  async sendEmailVerificationV2() {
-    const transporter = this.MailTransport();
-    const info = await transporter.sendMail({
-      from: this.config.get<string>('SMTP_USER'),
-      to: 'lorenzolubguban@gmail.com',
-      subject: 'Welcome!',
-      text: 'Congratulations, ikaw pinaka gwapo sa full scale',
-      html: '<b>Congratulations, ikaw pinaka gwapo sa full scale</b>',
-    });
-
-    return info;
-  }
+  private generateEmail = (template: React.JSX.Element) => {
+    return render(template);
+  };
 
   async sendVerificationEmail(email: string) {
-    const otp = new OTP();
-    // todo do not make 1234 hahah
-    otp.code = '1234';
-    otp.email = email;
+    const otp = await this.otpRepository.CreateOTP(email);
 
-    await this.otpRepository.upsert(otp, {
-      onConflictFields: ['email'],
-      onConflictAction: 'merge',
-      onConflictExcludeFields: ['id'],
+    const html = await this.generateEmail(VerificationCode({otp : otp.code}));
+    await this.MailTransport().sendMail({
+      from: `"Lab Result Manager" <${this.config.get<string>('SMTP_USER')}>`,
+      to: email,
+      subject: 'Verification Code',
+      html,
     });
-
-    // todo send email logic here
-    return true;
   }
 }
