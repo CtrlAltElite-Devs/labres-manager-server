@@ -12,21 +12,23 @@ export class LicenseSeeder extends Seeder {
             const masterLicenseKey = process.env.SUPER_LICENSE;
             if (process.env.NODE_ENV !== 'production') {
                 const licenseCount = 10;
+                const licensePrefix = 'TEST_LICENSE';
                 const savedLicenses = await em.findAll(License);
-                if(!(savedLicenses.length >= licenseCount)){
-                    const licensePrefix = 'TEST_LICENSE';
-                    const testLicenses = Array.from({ length: licenseCount }, (_, i) => {
+                const existingKeys = new Set(savedLicenses.map(l => l.licenseKey));
+
+                const missingLicenses = Array.from({ length: licenseCount }, (_, i) => `${licensePrefix}${i + 1}`)
+                    .filter(key => !existingKeys.has(key))
+                    .map(key => {
                         const license = new License();
-                        license.licenseKey = `${licensePrefix}${i + 1}`;
+                        license.licenseKey = key;
                         return license;
                     });
-                    try {
-                        await em.insertMany(License, testLicenses);
-                    } catch (error) {
-                        this.logger?.log?.('Failed to insert test licenses:', error);
-                    }
+
+                if (missingLicenses.length > 0) {
+                    await em.insertMany(License, missingLicenses);
+                    this.logger.log(`Inserted ${missingLicenses.length} missing test license(s)`);
                 } else {
-                    this.logger.log("Database Already has test licenses");
+                    this.logger.log("Database already has all test licenses");
                 }
             }
     
