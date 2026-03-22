@@ -47,7 +47,7 @@ jobs:
                   docker push $REGISTRY/$ORG/$IMAGE:${GITHUB_SHA}
 
             # 6️⃣ Deploy to VPS via SSH
-            - name: Deploy to Staging VPS
+            - name: Deploy to Production VPS
               uses: appleboy/ssh-action@v1.0.3
               with:
                   host: ${{ secrets.VPS_HOST }}
@@ -63,8 +63,8 @@ jobs:
                       else
                           cd labres-manager-server
                           git fetch origin
-                          git checkout staging
-                          git pull origin staging
+                          git checkout master
+                          git pull origin master
                           cd ..
                       fi
 
